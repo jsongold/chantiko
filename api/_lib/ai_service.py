@@ -1,13 +1,19 @@
 import json
 import os
 
-import litellm
+import anthropic
+from openai import OpenAI
 
 ALLOWED_MODELS = {
     "claude-haiku-4-5-20251001",
     "claude-sonnet-4-5-20250514",
     "gpt-4o-mini",
     "gpt-4o",
+}
+
+ANTHROPIC_MODELS = {
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-4-5-20250514",
 }
 
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -71,16 +77,30 @@ def _call_model(
         f"Command: {command}"
     )
 
-    response = litellm.completion(
-        model=model,
-        max_tokens=1024,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
-    )
-
-    raw_text = response.choices[0].message.content.strip()
+    if model in ANTHROPIC_MODELS:
+        client = anthropic.Anthropic(
+            api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+        )
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        raw_text = response.content[0].text.strip()
+    else:
+        client = OpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY", ""),
+        )
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=1024,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+        )
+        raw_text = response.choices[0].message.content.strip()
 
     try:
         return json.loads(raw_text)

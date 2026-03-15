@@ -2,7 +2,8 @@ fastapi
 mangum
 uvicorn
 sqlmodel
-litellm
+anthropic
+openai
 python-jose[cryptography]
 httpx
 psycopg2-binary
