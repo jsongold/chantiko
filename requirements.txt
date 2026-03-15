@@ -1,0 +1,8 @@
+fastapi
+mangum
+uvicorn
+sqlmodel
+litellm
+python-jose[cryptography]
+httpx
+psycopg2-binary
