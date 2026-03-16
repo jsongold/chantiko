@@ -4,6 +4,6 @@ uvicorn
 sqlmodel
 anthropic
 openai
-python-jose[cryptography]
+PyJWT[crypto]
 httpx
 psycopg2-binary

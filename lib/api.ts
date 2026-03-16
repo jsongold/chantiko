@@ -29,6 +29,10 @@ async function request<T>(
     headers: { ...headers, ...options.headers },
   })
 
+  if (response.status === 401) {
+    return { success: false, error: "Not authenticated" }
+  }
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({
       error: "Request failed",

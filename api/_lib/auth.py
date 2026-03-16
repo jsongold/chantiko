@@ -2,12 +2,27 @@ import os
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
-from jose import JWTError, jwt
+from jwt import PyJWKClient, decode, PyJWTError
 
 
-SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
-ALGORITHM = "HS256"
+SUPABASE_URL = os.environ.get(
+    "NEXT_PUBLIC_SUPABASE_URL", os.environ.get("SUPABASE_URL", "")
+)
 AUDIENCE = "authenticated"
+
+_jwk_client: PyJWKClient | None = None
+
+
+def _get_jwk_client() -> PyJWKClient:
+    global _jwk_client
+    if _jwk_client is not None:
+        return _jwk_client
+
+    if not SUPABASE_URL:
+        raise HTTPException(status_code=500, detail="Supabase URL not configured")
+
+    _jwk_client = PyJWKClient(f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json")
+    return _jwk_client
 
 
 def _extract_token(request: Request) -> str:
@@ -23,17 +38,16 @@ def _extract_token(request: Request) -> str:
 
 
 def _decode_token(token: str) -> dict:
-    if not SUPABASE_JWT_SECRET:
-        raise HTTPException(status_code=500, detail="JWT secret not configured")
-
     try:
-        payload = jwt.decode(
+        client = _get_jwk_client()
+        signing_key = client.get_signing_key_from_jwt(token)
+        payload = decode(
             token,
-            SUPABASE_JWT_SECRET,
-            algorithms=[ALGORITHM],
+            signing_key.key,
+            algorithms=["ES256"],
             audience=AUDIENCE,
         )
-    except JWTError as exc:
+    except PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     return payload

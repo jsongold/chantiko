@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI
 from sqlalchemy import func
-from sqlmodel import Session, col, select
+from sqlmodel import Session, select
 
 from api._lib.auth import CurrentUserId
 from api._lib.db import get_session
@@ -20,12 +20,13 @@ def activity_history(
     session: Session = Depends(get_session),
 ):
     try:
+        last_used = func.max(Activity.created_at).label("last_used")
         stmt = (
-            select(Activity.title, func.max(Activity.created_at).label("last_used"))
+            select(Activity.title, last_used)
             .where(Activity.user_id == UUID(user_id))
             .where(Activity.is_deleted == False)  # noqa: E712
             .group_by(Activity.title)
-            .order_by(col("last_used").desc())
+            .order_by(last_used.desc())
             .limit(10)
         )
 
@@ -34,7 +35,8 @@ def activity_history(
 
         return success_response(titles)
     except Exception as exc:
-        return error_response(f"Failed to fetch history: {exc}", status_code=500)
+        print(f"[HISTORY DEBUG] {exc}")
+        return error_response("Failed to fetch history", status_code=500)
 
 
 handler = Mangum(app, lifespan="off")

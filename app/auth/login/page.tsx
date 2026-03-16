@@ -9,15 +9,17 @@ import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isSignUp, setIsSignUp] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleEmailLogin = useCallback(
+  const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault()
-      const trimmed = email.trim()
-      if (!trimmed) return
+      const trimmedEmail = email.trim()
+      if (!trimmedEmail || !password) return
 
       setIsLoading(true)
       setError(null)
@@ -25,25 +27,35 @@ export default function LoginPage() {
 
       try {
         const supabase = createClient()
-        const { error: authError } = await supabase.auth.signInWithOtp({
-          email: trimmed,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        })
 
-        if (authError) {
-          setError(authError.message)
+        if (isSignUp) {
+          const { error: authError } = await supabase.auth.signUp({
+            email: trimmedEmail,
+            password,
+          })
+          if (authError) {
+            setError(authError.message)
+          } else {
+            setMessage("Account created! Check your email to confirm, then sign in.")
+          }
         } else {
-          setMessage("Check your email for the login link!")
+          const { error: authError } = await supabase.auth.signInWithPassword({
+            email: trimmedEmail,
+            password,
+          })
+          if (authError) {
+            setError(authError.message)
+          } else {
+            window.location.href = "/activity"
+          }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
+        setError(err instanceof Error ? err.message : "Something went wrong.")
       } finally {
         setIsLoading(false)
       }
     },
-    [email]
+    [email, password, isSignUp]
   )
 
   const handleGoogleLogin = useCallback(async () => {
@@ -66,7 +78,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleEmailLogin} className="space-y-3 text-left">
+        <form onSubmit={handleSubmit} className="space-y-3 text-left">
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -79,15 +91,40 @@ export default function LoginPage() {
               disabled={isLoading}
             />
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              disabled={isLoading}
+            />
+          </div>
           <Button
             type="submit"
             className="w-full"
             size="lg"
-            disabled={isLoading || !email.trim()}
+            disabled={isLoading || !email.trim() || !password}
           >
-            {isLoading ? "Sending..." : "Sign in with Email"}
+            {isLoading ? "Loading..." : isSignUp ? "Sign up" : "Sign in"}
           </Button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsSignUp((prev) => !prev)
+            setError(null)
+            setMessage(null)
+          }}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          {isSignUp ? "Already have an account? Sign in" : "No account? Sign up"}
+        </button>
 
         {message && (
           <p className="text-sm text-green-600">{message}</p>

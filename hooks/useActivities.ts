@@ -5,12 +5,6 @@ import { api } from "@/lib/api"
 import { useActivityStore } from "@/store/activityStore"
 import type { Activity } from "@/types"
 
-interface PaginatedActivities {
-  items: Activity[]
-  hasMore: boolean
-  cursor: string | null
-}
-
 export function useActivities() {
   const {
     activities,
@@ -29,14 +23,23 @@ export function useActivities() {
       const path = cursor
         ? `/activities?cursor=${encodeURIComponent(cursor)}`
         : "/activities"
-      const response = await api.get<PaginatedActivities>(path)
+      const response = await api.get<Activity[]>(path)
 
       if (response.success && response.data) {
-        appendActivities(
-          response.data.items,
-          response.data.hasMore,
-          response.data.cursor
-        )
+        const nextCursor = response.meta?.next_cursor as { cursor_created_at: string; cursor_id: string } | null | undefined
+        const hasMoreItems = nextCursor !== null && nextCursor !== undefined
+        const cursorStr = nextCursor ? `cursor_created_at=${nextCursor.cursor_created_at}&cursor_id=${nextCursor.cursor_id}` : null
+
+        if (!cursor) {
+          // First page — replace
+          useActivityStore.setState({
+            activities: response.data,
+            hasMore: hasMoreItems,
+            cursor: cursorStr,
+          })
+        } else {
+          appendActivities(response.data, hasMoreItems, cursorStr)
+        }
       }
     } finally {
       setLoading(false)
