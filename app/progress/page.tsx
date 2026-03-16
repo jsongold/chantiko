@@ -6,21 +6,21 @@ import { ActivityChart } from "@/components/progress/activity-chart"
 import { GoalProgressBar } from "@/components/progress/goal-progress-bar"
 import { StreakBadge } from "@/components/progress/streak-badge"
 import { useActivities } from "@/hooks/useActivities"
-import { useLayers } from "@/hooks/useLayers"
+import { useGoals } from "@/hooks/useGoals"
 import { Separator } from "@/components/ui/separator"
 import { features } from "@/lib/features"
 
 export default function ProgressPage() {
   const { activities, isLoading: activitiesLoading, fetchActivities } =
     useActivities()
-  const { layers, isLoading: layersLoading, fetchLayers } = useLayers()
+  const { goals, isLoading: goalsLoading, fetchGoals } = useGoals()
 
   useEffect(() => {
     if (features.progress) {
       fetchActivities()
-      fetchLayers()
+      fetchGoals()
     }
-  }, [fetchActivities, fetchLayers])
+  }, [fetchActivities, fetchGoals])
 
   if (!features.progress) {
     return (
@@ -37,7 +37,7 @@ export default function ProgressPage() {
 
   const isLoading =
     (activitiesLoading && activities.length === 0) ||
-    (layersLoading && layers.length === 0)
+    (goalsLoading && goals.length === 0)
 
   return (
     <AppShell>
@@ -58,7 +58,7 @@ export default function ProgressPage() {
           <div className="space-y-6">
             <ActivityChart activities={activities} />
             <Separator />
-            <GoalProgressBar layers={layers} />
+            <GoalProgressBar goals={goals} />
           </div>
         )}
       </div>
