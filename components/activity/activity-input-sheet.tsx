@@ -33,11 +33,18 @@ import {
 import { VALUE_UNITS, ACTIVITY_CATEGORIES } from "@/types"
 import type { Activity } from "@/types"
 
+export interface GoalOption {
+  id: string
+  name: string
+}
+
 const activityFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   value: z.string().min(1, "Value is required").max(100),
   value_unit: z.string().nullable(),
   category: z.string().min(1, "Category is required"),
+  goal_id: z.string().nullable(),
+  task_id: z.string().nullable(),
 })
 
 export type ActivityFormData = z.infer<typeof activityFormSchema>
@@ -48,6 +55,7 @@ interface ActivityInputSheetProps {
   onSubmit: (data: ActivityFormData) => void
   historyTitles: string[]
   activity?: Activity | null
+  goals?: GoalOption[]
 }
 
 export function ActivityInputSheet({
@@ -56,6 +64,7 @@ export function ActivityInputSheet({
   onSubmit,
   historyTitles,
   activity,
+  goals = [],
 }: ActivityInputSheetProps) {
   const isEditMode = activity !== null && activity !== undefined
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -75,6 +84,8 @@ export function ActivityInputSheet({
       value: "",
       value_unit: null,
       category: "Other",
+      goal_id: null,
+      task_id: null,
     },
   })
 
@@ -85,6 +96,8 @@ export function ActivityInputSheet({
         value: activity.value,
         value_unit: activity.value_unit,
         category: activity.category,
+        goal_id: activity.goal_id,
+        task_id: activity.task_id,
       })
       setTitleSearch(activity.title)
     } else {
@@ -93,6 +106,8 @@ export function ActivityInputSheet({
         value: "",
         value_unit: null,
         category: "Other",
+        goal_id: null,
+        task_id: null,
       })
       setTitleSearch("")
     }
@@ -252,6 +267,30 @@ export function ActivityInputSheet({
               </p>
             )}
           </div>
+
+          {goals.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Link to Goal (optional)</Label>
+              <Select
+                value={watch("goal_id") ?? ""}
+                onValueChange={(value) =>
+                  setValue("goal_id", value || null)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="No goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No goal</SelectItem>
+                  {goals.map((goal) => (
+                    <SelectItem key={goal.id} value={goal.id}>
+                      {goal.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <SheetFooter>
             <Button type="submit" disabled={isSubmitting} className="w-full">

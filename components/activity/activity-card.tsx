@@ -1,7 +1,7 @@
 "use client"
 
 import { formatDistanceToNow } from "date-fns"
-import { Trash2 } from "lucide-react"
+import { Trash2, Target } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Activity } from "@/types"
@@ -10,6 +10,7 @@ interface ActivityCardProps {
   activity: Activity
   onDelete?: (id: string) => void
   onTap?: (activity: Activity) => void
+  goalName?: string | null
 }
 
 function formatValue(value: string, unit: string | null): string {
@@ -27,7 +28,7 @@ function formatRelativeTime(dateString: string): string {
   }
 }
 
-export function ActivityCard({ activity, onDelete, onTap }: ActivityCardProps) {
+export function ActivityCard({ activity, onDelete, onTap, goalName }: ActivityCardProps) {
   const displayValue = formatValue(activity.value, activity.value_unit)
   const relativeTime = formatRelativeTime(activity.created_at)
 
@@ -51,6 +52,12 @@ export function ActivityCard({ activity, onDelete, onTap }: ActivityCardProps) {
           <Badge variant="secondary" className="shrink-0">
             {activity.category}
           </Badge>
+          {goalName && (
+            <Badge variant="outline" className="shrink-0 gap-1">
+              <Target className="size-2.5" />
+              {goalName}
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-xs text-muted-foreground">
