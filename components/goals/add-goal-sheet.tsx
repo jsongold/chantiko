@@ -16,22 +16,22 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import type { GoalWithCounts } from "@/types"
+import type { Goal } from "@/types"
 
-const goalSchema = z.object({
+const goalFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(500),
   target_value: z.string().nullable(),
   due_date: z.string().nullable(),
 })
 
-export type GoalFormValues = z.infer<typeof goalSchema>
+export type GoalFormData = z.infer<typeof goalFormSchema>
 
 interface AddGoalSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: GoalFormValues) => void
-  goal?: GoalWithCounts | null
+  onSubmit: (data: GoalFormData) => void
+  goal?: Goal | null
 }
 
 export function AddGoalSheet({
@@ -42,8 +42,8 @@ export function AddGoalSheet({
 }: AddGoalSheetProps) {
   const isEditMode = goal !== null && goal !== undefined
 
-  const form = useForm<GoalFormValues>({
-    resolver: zodResolver(goalSchema),
+  const form = useForm<GoalFormData>({
+    resolver: zodResolver(goalFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -70,7 +70,7 @@ export function AddGoalSheet({
     }
   }, [goal, form])
 
-  const handleSubmit = (values: GoalFormValues) => {
+  const handleSubmit = (values: GoalFormData) => {
     onSubmit(values)
     form.reset()
     onOpenChange(false)
@@ -80,11 +80,9 @@ export function AddGoalSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{isEditMode ? "Edit Goal" : "Add Goal"}</SheetTitle>
+          <SheetTitle>{isEditMode ? "Edit Goal" : "New Goal"}</SheetTitle>
           <SheetDescription>
-            {isEditMode
-              ? "Update this goal."
-              : "Create a new goal to track."}
+            {isEditMode ? "Update this goal." : "Create a new goal to track."}
           </SheetDescription>
         </SheetHeader>
 
@@ -100,11 +98,11 @@ export function AddGoalSheet({
               {...form.register("name")}
               aria-invalid={Boolean(form.formState.errors.name)}
             />
-            {form.formState.errors.name ? (
+            {form.formState.errors.name && (
               <p className="text-xs text-destructive">
                 {form.formState.errors.name.message}
               </p>
-            ) : null}
+            )}
           </div>
 
           <div className="space-y-2">

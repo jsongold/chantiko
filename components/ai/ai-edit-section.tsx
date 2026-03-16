@@ -5,7 +5,6 @@ import { useAIEdit } from "@/hooks/useAIEdit"
 import { useSettingsStore } from "@/store/settingsStore"
 import { AIEditBar } from "@/components/ai/ai-edit-bar"
 import { AIPreviewModal } from "@/components/ai/ai-preview-modal"
-import type { Operation } from "@/types"
 
 interface OperationHandlers {
   onCreate?: (data: Record<string, unknown>) => Promise<void>

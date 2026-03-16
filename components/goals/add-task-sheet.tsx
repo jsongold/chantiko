@@ -18,19 +18,20 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import type { Task } from "@/types"
 
-const taskSchema = z.object({
+const taskFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(500),
-  target_value: z.string().nullable(),
+  label: z.string().nullable(),
 })
 
-export type TaskFormValues = z.infer<typeof taskSchema>
+export type TaskFormData = z.infer<typeof taskFormSchema>
 
 interface AddTaskSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: TaskFormValues) => void
+  onSubmit: (data: TaskFormData) => void
   task?: Task | null
+  existingLabels?: string[]
 }
 
 export function AddTaskSheet({
@@ -38,15 +39,16 @@ export function AddTaskSheet({
   onOpenChange,
   onSubmit,
   task,
+  existingLabels = [],
 }: AddTaskSheetProps) {
   const isEditMode = task !== null && task !== undefined
 
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskSchema),
+  const form = useForm<TaskFormData>({
+    resolver: zodResolver(taskFormSchema),
     defaultValues: {
       name: "",
       description: "",
-      target_value: null,
+      label: null,
     },
   })
 
@@ -55,18 +57,18 @@ export function AddTaskSheet({
       form.reset({
         name: task.name,
         description: task.description ?? "",
-        target_value: task.target_value,
+        label: task.label,
       })
     } else {
       form.reset({
         name: "",
         description: "",
-        target_value: null,
+        label: null,
       })
     }
   }, [task, form])
 
-  const handleSubmit = (values: TaskFormValues) => {
+  const handleSubmit = (values: TaskFormData) => {
     onSubmit(values)
     form.reset()
     onOpenChange(false)
@@ -76,11 +78,9 @@ export function AddTaskSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{isEditMode ? "Edit Task" : "Add Task"}</SheetTitle>
+          <SheetTitle>{isEditMode ? "Edit Task" : "New Task"}</SheetTitle>
           <SheetDescription>
-            {isEditMode
-              ? "Update this task."
-              : "Create a new task."}
+            {isEditMode ? "Update this task." : "Add a new task."}
           </SheetDescription>
         </SheetHeader>
 
@@ -96,11 +96,11 @@ export function AddTaskSheet({
               {...form.register("name")}
               aria-invalid={Boolean(form.formState.errors.name)}
             />
-            {form.formState.errors.name ? (
+            {form.formState.errors.name && (
               <p className="text-xs text-destructive">
                 {form.formState.errors.name.message}
               </p>
-            ) : null}
+            )}
           </div>
 
           <div className="space-y-2">
@@ -113,12 +113,20 @@ export function AddTaskSheet({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-target">Target Value (optional)</Label>
+            <Label htmlFor="task-label">Label (optional)</Label>
             <Input
-              id="task-target"
-              placeholder="e.g. 10 pages, 30 min..."
-              {...form.register("target_value")}
+              id="task-label"
+              placeholder="e.g. Sprint 1, Phase A..."
+              list="label-suggestions"
+              {...form.register("label")}
             />
+            {existingLabels.length > 0 && (
+              <datalist id="label-suggestions">
+                {existingLabels.map((label) => (
+                  <option key={label} value={label} />
+                ))}
+              </datalist>
+            )}
           </div>
 
           <SheetFooter>
