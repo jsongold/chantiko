@@ -1,20 +1,18 @@
 "use client"
 
-import { useEffect, useRef, useCallback, useMemo } from "react"
+import { useEffect, useRef, useCallback, useMemo, useState } from "react"
 import { isToday, isYesterday, format, parseISO } from "date-fns"
 import { Loader2 } from "lucide-react"
 import { ActivityCard } from "@/components/activity/activity-card"
 import { EmptyState } from "@/components/shared/empty-state"
+import {
+  ActivityInputSheet,
+  type ActivityFormData,
+} from "@/components/activity/activity-input-sheet"
+import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { AIEditSection } from "@/components/ai/ai-edit-section"
+import { useActivities } from "@/hooks/useActivities"
 import type { Activity } from "@/types"
-
-interface ActivityListProps {
-  activities: Activity[]
-  onLoadMore: () => void
-  hasMore: boolean
-  isLoading: boolean
-  onDelete: (id: string) => void
-  onTap?: (activity: Activity) => void
-}
 
 function formatDateLabel(dateString: string): string {
   const date = parseISO(dateString)
@@ -58,24 +56,43 @@ function groupActivitiesByDate(activities: Activity[]): DateGroup[] {
   return groups
 }
 
-export function ActivityList({
-  activities,
-  onLoadMore,
-  hasMore,
-  isLoading,
-  onDelete,
-  onTap,
-}: ActivityListProps) {
+export function ActivityList() {
+  const {
+    activities,
+    isLoading,
+    hasMore,
+    fetchActivities,
+    createActivity,
+    updateActivity,
+    deleteActivity,
+    fetchHistory,
+  } = useActivities()
+
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+  const [historyTitles, setHistoryTitles] = useState<string[]>([])
   const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetchActivities()
+  }, [fetchActivities])
+
+  useEffect(() => {
+    fetchHistory()
+      .then(setHistoryTitles)
+      .catch(() => {
+        /* history fetch is non-critical */
+      })
+  }, [fetchHistory])
 
   const handleIntersection = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries
       if (entry.isIntersecting && hasMore && !isLoading) {
-        onLoadMore()
+        fetchActivities()
       }
     },
-    [hasMore, isLoading, onLoadMore]
+    [hasMore, isLoading, fetchActivities]
   )
 
   useEffect(() => {
@@ -100,40 +117,113 @@ export function ActivityList({
     [activities]
   )
 
-  if (!isLoading && activities.length === 0) {
-    return (
-      <EmptyState
-        title="No activities yet"
-        description="Tap the + button to log your first activity."
-      />
-    )
-  }
+  const handleCreateActivity = useCallback(
+    async (data: ActivityFormData) => {
+      await createActivity(data)
+      const titles = await fetchHistory().catch(() => [] as string[])
+      setHistoryTitles(titles)
+    },
+    [createActivity, fetchHistory]
+  )
+
+  const handleUpdateActivity = useCallback(
+    async (data: ActivityFormData) => {
+      if (!editingActivity) {
+        return
+      }
+      await updateActivity(editingActivity.id, data)
+      setEditingActivity(null)
+    },
+    [editingActivity, updateActivity]
+  )
+
+  const handleTapActivity = useCallback((activity: Activity) => {
+    setEditingActivity(activity)
+    setSheetOpen(true)
+  }, [])
+
+  const handleSheetOpenChange = useCallback((open: boolean) => {
+    setSheetOpen(open)
+    if (!open) {
+      setEditingActivity(null)
+    }
+  }, [])
+
+  const aiContextProvider = useCallback(
+    () => ({ activities: activities.slice(0, 20) }),
+    [activities]
+  )
+
+  const aiHandlers = useMemo(
+    () => ({
+      onCreate: async (data: Record<string, unknown>) => {
+        await createActivity({
+          title: String(data.title ?? ""),
+          value: String(data.value ?? ""),
+          value_unit: data.value_unit ? String(data.value_unit) : null,
+          category: String(data.category ?? "Other"),
+        })
+      },
+      onDelete: async (id: string) => {
+        await deleteActivity(id)
+      },
+    }),
+    [createActivity, deleteActivity]
+  )
 
   return (
-    <div className="flex flex-col">
-      {dateGroups.map((group) => (
-        <div key={group.dateKey}>
-          <p className="sticky top-0 z-10 bg-background px-4 py-2 text-xs font-medium text-muted-foreground">
-            {group.label}
-          </p>
-          {group.activities.map((activity) => (
-            <ActivityCard
-              key={activity.id}
-              activity={activity}
-              onDelete={onDelete}
-              onTap={onTap}
-            />
+    <>
+      <AIEditSection
+        contextProvider={aiContextProvider}
+        endpoint="activity_edit"
+        handlers={aiHandlers}
+      />
+
+      {!isLoading && activities.length === 0 ? (
+        <EmptyState
+          title="No activities yet"
+          description="Tap the + button to log your first activity."
+        />
+      ) : (
+        <div className="flex flex-col">
+          {dateGroups.map((group) => (
+            <div key={group.dateKey}>
+              <p className="sticky top-0 z-10 bg-background px-4 py-2 text-xs font-medium text-muted-foreground">
+                {group.label}
+              </p>
+              {group.activities.map((activity) => (
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  onDelete={deleteActivity}
+                  onTap={handleTapActivity}
+                />
+              ))}
+            </div>
           ))}
-        </div>
-      ))}
 
-      <div ref={sentinelRef} className="h-1" />
+          <div ref={sentinelRef} className="h-1" />
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          {isLoading && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
         </div>
       )}
-    </div>
+
+      <AddActivityFab onClick={() => {
+        setEditingActivity(null)
+        setSheetOpen(true)
+      }} />
+
+      <ActivityInputSheet
+        open={sheetOpen}
+        onOpenChange={handleSheetOpenChange}
+        onSubmit={editingActivity ? handleUpdateActivity : handleCreateActivity}
+        historyTitles={historyTitles}
+        activity={editingActivity}
+      />
+    </>
   )
 }
