@@ -37,8 +37,8 @@ export default function LoginPage() {
         } else {
           setMessage("Check your email for the login link!")
         }
-      } catch {
-        setError("Something went wrong. Please try again.")
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
       } finally {
         setIsLoading(false)
       }
