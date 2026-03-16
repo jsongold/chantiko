@@ -12,9 +12,8 @@ import { useAIEdit } from "@/hooks/useAIEdit"
 import { useSettingsStore } from "@/store/settingsStore"
 import { AIEditBar } from "@/components/ai/ai-edit-bar"
 import { AIPreviewModal } from "@/components/ai/ai-preview-modal"
-import { Button } from "@/components/ui/button"
-import { PlusIcon } from "lucide-react"
-import type { Layer } from "@/types"
+import { RouteButton } from "@/components/shared/route-button"
+import type { Layer, LayerNode } from "@/types"
 
 export default function GoalsPage() {
   const { layers, isLoading, fetchLayers, createLayer, updateLayer, deleteLayer } =
@@ -28,6 +27,7 @@ export default function GoalsPage() {
   } = useAIEdit()
   const { aiEnabled } = useSettingsStore()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingLayer, setEditingLayer] = useState<Layer | null>(null)
   const [isApplying, setIsApplying] = useState(false)
 
   useEffect(() => {
@@ -51,10 +51,44 @@ export default function GoalsPage() {
         parent: data.parent,
         target_value: data.target_value,
         current_value: null,
+        due_date: data.due_date ?? null,
         status: "active",
       })
     },
     [createLayer]
+  )
+
+  const handleUpdateLayer = useCallback(
+    async (data: AddLayerFormValues) => {
+      if (!editingLayer) {
+        return
+      }
+      await updateLayer(editingLayer.id, {
+        type: data.type,
+        name: data.name,
+        description: data.description,
+        parent: data.parent,
+        target_value: data.target_value,
+        due_date: data.due_date ?? null,
+      })
+      setEditingLayer(null)
+    },
+    [editingLayer, updateLayer]
+  )
+
+  const handleTapLayer = useCallback((layer: LayerNode) => {
+    setEditingLayer(layer)
+    setSheetOpen(true)
+  }, [])
+
+  const handleSheetOpenChange = useCallback(
+    (open: boolean) => {
+      setSheetOpen(open)
+      if (!open) {
+        setEditingLayer(null)
+      }
+    },
+    []
   )
 
   const handleAICommand = useCallback(
@@ -107,24 +141,25 @@ export default function GoalsPage() {
             layers={layers}
             onToggleTask={handleToggleTask}
             onDelete={deleteLayer}
+            onEdit={handleTapLayer}
           />
         )}
       </div>
 
-      <Button
-        size="icon"
-        className="fixed bottom-20 right-4 z-40 size-12 rounded-full shadow-lg"
-        onClick={() => setSheetOpen(true)}
+      <RouteButton
+        onClick={() => {
+          setEditingLayer(null)
+          setSheetOpen(true)
+        }}
         aria-label="Add goal or task"
-      >
-        <PlusIcon className="size-5" />
-      </Button>
+      />
 
       <AddLayerSheet
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        onSubmit={handleAddLayer}
+        onOpenChange={handleSheetOpenChange}
+        onSubmit={editingLayer ? handleUpdateLayer : handleAddLayer}
         existingLayers={layers}
+        layer={editingLayer}
       />
 
       <AIPreviewModal

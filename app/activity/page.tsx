@@ -13,6 +13,7 @@ import { AIPreviewModal } from "@/components/ai/ai-preview-modal"
 import { useActivities } from "@/hooks/useActivities"
 import { useAIEdit } from "@/hooks/useAIEdit"
 import { useSettingsStore } from "@/store/settingsStore"
+import type { Activity } from "@/types"
 
 export default function ActivityPage() {
   const {
@@ -21,6 +22,7 @@ export default function ActivityPage() {
     hasMore,
     fetchActivities,
     createActivity,
+    updateActivity,
     deleteActivity,
     fetchHistory,
   } = useActivities()
@@ -35,6 +37,7 @@ export default function ActivityPage() {
 
   const { aiEnabled } = useSettingsStore()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const [historyTitles, setHistoryTitles] = useState<string[]>([])
   const [isApplying, setIsApplying] = useState(false)
 
@@ -57,6 +60,32 @@ export default function ActivityPage() {
       setHistoryTitles(titles)
     },
     [createActivity, fetchHistory]
+  )
+
+  const handleUpdateActivity = useCallback(
+    async (data: ActivityFormData) => {
+      if (!editingActivity) {
+        return
+      }
+      await updateActivity(editingActivity.id, data)
+      setEditingActivity(null)
+    },
+    [editingActivity, updateActivity]
+  )
+
+  const handleTapActivity = useCallback((activity: Activity) => {
+    setEditingActivity(activity)
+    setSheetOpen(true)
+  }, [])
+
+  const handleSheetOpenChange = useCallback(
+    (open: boolean) => {
+      setSheetOpen(open)
+      if (!open) {
+        setEditingActivity(null)
+      }
+    },
+    []
   )
 
   const handleAICommand = useCallback(
@@ -106,15 +135,20 @@ export default function ActivityPage() {
         hasMore={hasMore}
         isLoading={isLoading}
         onDelete={deleteActivity}
+        onTap={handleTapActivity}
       />
 
-      <AddActivityFab onClick={() => setSheetOpen(true)} />
+      <AddActivityFab onClick={() => {
+        setEditingActivity(null)
+        setSheetOpen(true)
+      }} />
 
       <ActivityInputSheet
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        onSubmit={handleCreateActivity}
+        onOpenChange={handleSheetOpenChange}
+        onSubmit={editingActivity ? handleUpdateActivity : handleCreateActivity}
         historyTitles={historyTitles}
+        activity={editingActivity}
       />
 
       <AIPreviewModal

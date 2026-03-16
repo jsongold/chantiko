@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -31,6 +31,7 @@ import {
   SelectItem,
 } from "@/components/ui/select"
 import { VALUE_UNITS, ACTIVITY_CATEGORIES } from "@/types"
+import type { Activity } from "@/types"
 
 const activityFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -46,6 +47,7 @@ interface ActivityInputSheetProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (data: ActivityFormData) => void
   historyTitles: string[]
+  activity?: Activity | null
 }
 
 export function ActivityInputSheet({
@@ -53,7 +55,9 @@ export function ActivityInputSheet({
   onOpenChange,
   onSubmit,
   historyTitles,
+  activity,
 }: ActivityInputSheetProps) {
+  const isEditMode = activity !== null && activity !== undefined
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [titleSearch, setTitleSearch] = useState("")
 
@@ -73,6 +77,26 @@ export function ActivityInputSheet({
       category: "Other",
     },
   })
+
+  useEffect(() => {
+    if (activity) {
+      reset({
+        title: activity.title,
+        value: activity.value,
+        value_unit: activity.value_unit,
+        category: activity.category,
+      })
+      setTitleSearch(activity.title)
+    } else {
+      reset({
+        title: "",
+        value: "",
+        value_unit: null,
+        category: "Other",
+      })
+      setTitleSearch("")
+    }
+  }, [activity, reset])
 
   const selectedUnit = watch("value_unit")
   const selectedCategory = watch("category")
@@ -113,8 +137,10 @@ export function ActivityInputSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="rounded-t-xl">
         <SheetHeader>
-          <SheetTitle>Log Activity</SheetTitle>
-          <SheetDescription>Record what you did.</SheetDescription>
+          <SheetTitle>{isEditMode ? "Edit Activity" : "Log Activity"}</SheetTitle>
+          <SheetDescription>
+            {isEditMode ? "Update this activity." : "Record what you did."}
+          </SheetDescription>
         </SheetHeader>
 
         <form
@@ -229,7 +255,11 @@ export function ActivityInputSheet({
 
           <SheetFooter>
             <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Saving..." : "Save Activity"}
+              {isSubmitting
+                ? "Saving..."
+                : isEditMode
+                  ? "Update"
+                  : "Save Activity"}
             </Button>
           </SheetFooter>
         </form>

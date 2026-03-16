@@ -12,6 +12,7 @@ interface ActivityListProps {
   hasMore: boolean
   isLoading: boolean
   onDelete: (id: string) => void
+  onTap?: (activity: Activity) => void
 }
 
 export function ActivityList({
@@ -20,6 +21,7 @@ export function ActivityList({
   hasMore,
   isLoading,
   onDelete,
+  onTap,
 }: ActivityListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -66,6 +68,7 @@ export function ActivityList({
           key={activity.id}
           activity={activity}
           onDelete={onDelete}
+          onTap={onTap}
         />
       ))}
 

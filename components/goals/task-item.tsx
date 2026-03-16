@@ -3,16 +3,17 @@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Trash2Icon } from "lucide-react"
-import type { Layer } from "@/types"
+import type { Layer, LayerNode } from "@/types"
 import { cn } from "@/lib/utils"
 
 interface TaskItemProps {
   task: Layer
   onToggle: (id: string, done: boolean) => void
   onDelete: (id: string) => void
+  onEdit?: (layer: LayerNode) => void
 }
 
-export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
+export function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemProps) {
   const isDone = task.status === "done"
 
   return (
@@ -24,26 +25,22 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
         }}
         className="mt-0.5"
       />
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            "text-sm leading-snug",
-            isDone && "line-through text-muted-foreground"
-          )}
-        >
-          {task.name}
-        </p>
-        {task.description ? (
-          <p
-            className={cn(
-              "mt-0.5 text-xs text-muted-foreground",
-              isDone && "line-through"
-            )}
-          >
-            {task.description}
-          </p>
-        ) : null}
-      </div>
+      <p
+        className={cn(
+          "flex-1 min-w-0 text-sm leading-snug cursor-pointer active:opacity-70",
+          isDone && "line-through text-muted-foreground"
+        )}
+        onClick={() => onEdit?.({ ...task, children: [] } as LayerNode)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            onEdit?.({ ...task, children: [] } as LayerNode)
+          }
+        }}
+      >
+        {task.name}
+      </p>
       <Button
         variant="ghost"
         size="icon-sm"

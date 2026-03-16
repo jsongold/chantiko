@@ -33,6 +33,7 @@ class LayerCreate(BaseModel):
     description: str = Field("", max_length=500)
     target_value: Optional[str] = Field(None, max_length=100)
     current_value: Optional[str] = Field(None, max_length=100)
+    due_date: Optional[str] = None
     status: Literal["active", "done"] = "active"
 
 
@@ -42,6 +43,7 @@ class LayerUpdate(BaseModel):
     description: Optional[str] = None
     target_value: Optional[str] = None
     current_value: Optional[str] = None
+    due_date: Optional[str] = None
     status: Optional[str] = None
 
 

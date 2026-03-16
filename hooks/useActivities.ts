@@ -80,6 +80,20 @@ export function useActivities() {
     [addActivity, removeActivity]
   )
 
+  const handleUpdateActivity = useCallback(
+    async (id: string, data: Partial<Omit<Activity, "id" | "user_id" | "is_deleted" | "created_at" | "updated_at">>) => {
+      const response = await api.patch<Activity>(`/activities/${id}`, data)
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error ?? "Failed to update activity")
+      }
+
+      useActivityStore.getState().updateActivity(id, response.data)
+      return response.data
+    },
+    []
+  )
+
   const deleteActivity = useCallback(
     async (id: string) => {
       const existing = activities.find((a) => a.id === id)
@@ -120,6 +134,7 @@ export function useActivities() {
     hasMore,
     fetchActivities,
     createActivity,
+    updateActivity: handleUpdateActivity,
     deleteActivity,
     fetchHistory,
   }
