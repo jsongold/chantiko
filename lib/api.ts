@@ -4,10 +4,6 @@ import type { ApiResponse } from "@/types"
 const API_BASE = "/api"
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-  if (process.env.NEXT_PUBLIC_AUTH_DISABLED === "true") {
-    return { "Content-Type": "application/json" }
-  }
-
   const supabase = createClient()
   const {
     data: { session },

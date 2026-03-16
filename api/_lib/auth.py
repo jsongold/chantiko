@@ -1,28 +1,13 @@
-import logging
 import os
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 from jose import JWTError, jwt
 
-logger = logging.getLogger(__name__)
 
 SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
 ALGORITHM = "HS256"
 AUDIENCE = "authenticated"
-
-AUTH_DISABLED = os.environ.get("AUTH_DISABLED", "").lower() == "true"
-VERCEL_ENV = os.environ.get("VERCEL_ENV", "")
-MOCK_USER_ID = "00000000-0000-0000-0000-000000000000"
-
-if AUTH_DISABLED and VERCEL_ENV == "production":
-    raise RuntimeError(
-        "AUTH_DISABLED must not be enabled in production. "
-        "Remove AUTH_DISABLED or set it to 'false'."
-    )
-
-if AUTH_DISABLED:
-    logger.warning("Authentication is disabled. Do not use this setting in production.")
 
 
 def _extract_token(request: Request) -> str:
@@ -55,9 +40,6 @@ def _decode_token(token: str) -> dict:
 
 
 def get_current_user_id(request: Request) -> str:
-    if AUTH_DISABLED:
-        return MOCK_USER_ID
-
     token = _extract_token(request)
     payload = _decode_token(token)
 
