@@ -7,3 +7,4 @@ openai
 PyJWT[crypto]
 httpx
 psycopg2-binary
+mcp
