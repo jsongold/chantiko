@@ -7,8 +7,15 @@ import {
   AddTaskSheet,
   type TaskFormData,
 } from "@/components/goals/add-task-sheet"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { ChevronRightIcon } from "lucide-react"
 import { RouteButton } from "@/components/shared/route-button"
 import { EmptyState } from "@/components/shared/empty-state"
+import { cn } from "@/lib/utils"
 import type { Task } from "@/types"
 
 interface TaskListProps {
@@ -120,27 +127,45 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
           />
         ) : (
           <div className="space-y-4">
-            {labelGroups.map((group) => (
-              <div key={group.label ?? "__ungrouped"}>
-                <p className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {group.label ?? "Ungrouped"}
-                </p>
-                <div className="space-y-1 rounded-lg border bg-card">
-                  {group.tasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onToggle={() => handleToggle(task)}
-                      onTap={() => {
-                        setEditingTask(task)
-                        setSheetOpen(true)
-                      }}
-                      onDelete={() => deleteTask(task.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+            {labelGroups.map((group) => {
+              const doneCount = group.tasks.filter((t) => t.status === "done").length
+              const totalCount = group.tasks.length
+
+              return (
+                <Collapsible key={group.label ?? "__ungrouped"} defaultOpen>
+                  <CollapsibleTrigger className="flex w-full items-center gap-1.5 mb-1 group">
+                    <ChevronRightIcon className="size-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {group.label ?? "Ungrouped"}
+                    </span>
+                    <span className={cn(
+                      "ml-auto text-xs tabular-nums",
+                      doneCount === totalCount
+                        ? "text-green-600"
+                        : "text-muted-foreground"
+                    )}>
+                      {doneCount}/{totalCount}
+                    </span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="space-y-1 rounded-lg border bg-card">
+                      {group.tasks.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onToggle={() => handleToggle(task)}
+                          onTap={() => {
+                            setEditingTask(task)
+                            setSheetOpen(true)
+                          }}
+                          onDelete={() => deleteTask(task.id)}
+                        />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )
+            })}
           </div>
         )}
       </div>
