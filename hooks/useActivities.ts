@@ -10,7 +10,6 @@ export function useActivities() {
     activities,
     isLoading,
     hasMore,
-    cursor,
     setLoading,
     appendActivities,
     addActivity,
@@ -18,10 +17,11 @@ export function useActivities() {
   } = useActivityStore()
 
   const fetchActivities = useCallback(async () => {
+    const currentCursor = useActivityStore.getState().cursor
     setLoading(true)
     try {
-      const path = cursor
-        ? `/activities?cursor=${encodeURIComponent(cursor)}`
+      const path = currentCursor
+        ? `/activities?cursor=${encodeURIComponent(currentCursor)}`
         : "/activities"
       const response = await api.get<Activity[]>(path)
 
@@ -30,7 +30,7 @@ export function useActivities() {
         const hasMoreItems = nextCursor !== null && nextCursor !== undefined
         const cursorStr = nextCursor ? `cursor_created_at=${nextCursor.cursor_created_at}&cursor_id=${nextCursor.cursor_id}` : null
 
-        if (!cursor) {
+        if (!currentCursor) {
           // First page — replace
           useActivityStore.setState({
             activities: response.data,
@@ -44,7 +44,7 @@ export function useActivities() {
     } finally {
       setLoading(false)
     }
-  }, [cursor, setLoading, appendActivities])
+  }, [setLoading, appendActivities])
 
   const createActivity = useCallback(
     async (data: Omit<Activity, "id" | "user_id" | "is_deleted" | "created_at" | "updated_at">) => {

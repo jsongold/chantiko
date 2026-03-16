@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import Depends, FastAPI
@@ -8,6 +9,8 @@ from api._lib.db import get_session
 from api._lib.models import Layer
 from api._lib.schemas import LayerCreate, error_response, success_response
 from mangum import Mangum
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
@@ -28,8 +31,9 @@ def list_layers(
         data = [layer.model_dump(mode="json") for layer in layers]
 
         return success_response(data)
-    except Exception as exc:
-        return error_response(f"Failed to fetch layers: {exc}", status_code=500)
+    except Exception:
+        logger.exception("Failed to fetch layers")
+        return error_response("Failed to fetch layers", status_code=500)
 
 
 @app.post("/api/layers")
@@ -69,9 +73,10 @@ def create_layer(
         session.refresh(layer)
 
         return success_response(layer.model_dump(mode="json"))
-    except Exception as exc:
+    except Exception:
         session.rollback()
-        return error_response(f"Failed to create layer: {exc}", status_code=500)
+        logger.exception("Failed to create layer")
+        return error_response("Failed to create layer", status_code=500)
 
 
 handler = Mangum(app, lifespan="off")

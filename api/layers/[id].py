@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -9,6 +10,8 @@ from api._lib.db import get_session
 from api._lib.models import Layer
 from api._lib.schemas import LayerUpdate, error_response, success_response
 from mangum import Mangum
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
@@ -83,9 +86,10 @@ def update_layer(
         session.refresh(layer)
 
         return success_response(layer.model_dump(mode="json"))
-    except Exception as exc:
+    except Exception:
         session.rollback()
-        return error_response(f"Failed to update layer: {exc}", status_code=500)
+        logger.exception("Failed to update layer")
+        return error_response("Failed to update layer", status_code=500)
 
 
 @app.delete("/api/layers/{id}")
@@ -109,9 +113,10 @@ def delete_layer(
         session.commit()
 
         return success_response({"deleted": str(id)})
-    except Exception as exc:
+    except Exception:
         session.rollback()
-        return error_response(f"Failed to delete layer: {exc}", status_code=500)
+        logger.exception("Failed to delete layer")
+        return error_response("Failed to delete layer", status_code=500)
 
 
 handler = Mangum(app, lifespan="off")

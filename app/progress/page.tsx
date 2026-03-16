@@ -36,10 +36,8 @@ export default function ProgressPage() {
   }
 
   const isLoading =
-    activitiesLoading &&
-    activities.length === 0 &&
-    layersLoading &&
-    layers.length === 0
+    (activitiesLoading && activities.length === 0) ||
+    (layersLoading && layers.length === 0)
 
   return (
     <AppShell>

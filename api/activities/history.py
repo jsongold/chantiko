@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import Depends, FastAPI
@@ -9,6 +10,8 @@ from api._lib.db import get_session
 from api._lib.models import Activity
 from api._lib.schemas import error_response, success_response
 from mangum import Mangum
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
@@ -34,8 +37,8 @@ def activity_history(
         titles = [row[0] for row in rows]
 
         return success_response(titles)
-    except Exception as exc:
-        print(f"[HISTORY DEBUG] {exc}")
+    except Exception:
+        logger.exception("Failed to fetch activity history")
         return error_response("Failed to fetch history", status_code=500)
 
 

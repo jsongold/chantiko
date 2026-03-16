@@ -42,13 +42,6 @@ export default function GoalsPage() {
     [updateLayer]
   )
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      await deleteLayer(id)
-    },
-    [deleteLayer]
-  )
-
   const handleAddLayer = useCallback(
     async (data: AddLayerFormValues) => {
       await createLayer({
@@ -113,7 +106,7 @@ export default function GoalsPage() {
           <GoalTree
             layers={layers}
             onToggleTask={handleToggleTask}
-            onDelete={handleDelete}
+            onDelete={deleteLayer}
           />
         )}
       </div>

@@ -19,9 +19,6 @@ def ai_goal_edit(
     try:
         result = generate_goal_edit(body.command, body.context, body.model)
         return success_response(result)
-    except RuntimeError:
-        logger.exception("AI goal edit failed")
-        return error_response("AI edit failed. Please try again.", status_code=500)
     except Exception:
         logger.exception("AI goal edit failed")
         return error_response("AI edit failed. Please try again.", status_code=500)

@@ -19,9 +19,6 @@ def ai_activity_edit(
     try:
         result = generate_activity_edit(body.command, body.context, body.model)
         return success_response(result)
-    except RuntimeError:
-        logger.exception("AI activity edit failed")
-        return error_response("AI edit failed. Please try again.", status_code=500)
     except Exception:
         logger.exception("AI activity edit failed")
         return error_response("AI edit failed. Please try again.", status_code=500)

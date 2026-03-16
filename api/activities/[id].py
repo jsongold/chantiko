@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -9,6 +10,8 @@ from api._lib.db import get_session
 from api._lib.models import Activity
 from api._lib.schemas import ActivityUpdate, error_response, success_response
 from mangum import Mangum
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
@@ -51,9 +54,10 @@ def update_activity(
         session.refresh(activity)
 
         return success_response(activity.model_dump(mode="json"))
-    except Exception as exc:
+    except Exception:
         session.rollback()
-        return error_response(f"Failed to update activity: {exc}", status_code=500)
+        logger.exception("Failed to update activity")
+        return error_response("Failed to update activity", status_code=500)
 
 
 @app.delete("/api/activities/{id}")
@@ -74,9 +78,10 @@ def delete_activity(
         session.commit()
 
         return success_response({"deleted": str(id)})
-    except Exception as exc:
+    except Exception:
         session.rollback()
-        return error_response(f"Failed to delete activity: {exc}", status_code=500)
+        logger.exception("Failed to delete activity")
+        return error_response("Failed to delete activity", status_code=500)
 
 
 handler = Mangum(app, lifespan="off")

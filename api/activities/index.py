@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -10,6 +11,8 @@ from api._lib.db import get_session
 from api._lib.models import Activity
 from api._lib.schemas import ActivityCreate, error_response, success_response
 from mangum import Mangum
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
@@ -55,8 +58,9 @@ def list_activities(
             }
 
         return success_response(data, meta={"limit": limit, "next_cursor": next_cursor})
-    except Exception as exc:
-        return error_response(f"Failed to fetch activities: {exc}", status_code=500)
+    except Exception:
+        logger.exception("Failed to fetch activities")
+        return error_response("Failed to fetch activities", status_code=500)
 
 
 @app.post("/api/activities")
@@ -78,9 +82,10 @@ def create_activity(
         session.refresh(activity)
 
         return success_response(activity.model_dump(mode="json"))
-    except Exception as exc:
+    except Exception:
         session.rollback()
-        return error_response(f"Failed to create activity: {exc}", status_code=500)
+        logger.exception("Failed to create activity")
+        return error_response("Failed to create activity", status_code=500)
 
 
 handler = Mangum(app, lifespan="off")

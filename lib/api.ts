@@ -23,7 +23,13 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const headers = await getAuthHeaders()
+  let headers: HeadersInit
+  try {
+    headers = await getAuthHeaders()
+  } catch {
+    return { success: false, error: "Not authenticated" }
+  }
+
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: { ...headers, ...options.headers },
