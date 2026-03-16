@@ -9,6 +9,7 @@ import type { Activity } from "@/types"
 interface ActivityCardProps {
   activity: Activity
   onDelete?: (id: string) => void
+  onTap?: (activity: Activity) => void
 }
 
 function formatValue(value: string, unit: string | null): string {
@@ -26,12 +27,22 @@ function formatRelativeTime(dateString: string): string {
   }
 }
 
-export function ActivityCard({ activity, onDelete }: ActivityCardProps) {
+export function ActivityCard({ activity, onDelete, onTap }: ActivityCardProps) {
   const displayValue = formatValue(activity.value, activity.value_unit)
   const relativeTime = formatRelativeTime(activity.created_at)
 
   return (
-    <div className="flex items-center gap-3 border-b px-4 py-3">
+    <div
+      className="flex items-center gap-3 border-b px-4 py-3 cursor-pointer active:bg-muted/50"
+      onClick={() => onTap?.(activity)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          onTap?.(activity)
+        }
+      }}
+    >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium truncate">

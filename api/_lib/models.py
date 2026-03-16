@@ -38,6 +38,40 @@ class Layer(SQLModel, table=True):
     description: str = Field(default="")
     target_value: Optional[str] = Field(default=None)
     current_value: Optional[str] = Field(default=None)
+    due_date: Optional[datetime] = Field(default=None)
+    status: str = Field(default="active")
+    is_deleted: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=_utcnow)
+    updated_at: datetime = Field(default_factory=_utcnow)
+
+
+class Goal(SQLModel, table=True):
+    __tablename__ = "goals"
+
+    id: uuid.UUID = Field(default_factory=_new_uuid, primary_key=True)
+    user_id: uuid.UUID = Field(index=True)
+    name: str
+    description: str = Field(default="")
+    target_value: Optional[str] = Field(default=None)
+    current_value: Optional[str] = Field(default=None)
+    due_date: Optional[datetime] = Field(default=None)
+    status: str = Field(default="active")
+    is_deleted: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=_utcnow)
+    updated_at: datetime = Field(default_factory=_utcnow)
+
+
+class Task(SQLModel, table=True):
+    __tablename__ = "tasks"
+
+    id: uuid.UUID = Field(default_factory=_new_uuid, primary_key=True)
+    user_id: uuid.UUID = Field(index=True)
+    goal_id: uuid.UUID = Field(index=True)
+    name: str
+    label: Optional[str] = Field(default=None)
+    description: str = Field(default="")
+    target_value: Optional[str] = Field(default=None)
+    current_value: Optional[str] = Field(default=None)
     status: str = Field(default="active")
     is_deleted: bool = Field(default=False)
     created_at: datetime = Field(default_factory=_utcnow)

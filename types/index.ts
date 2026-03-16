@@ -19,6 +19,7 @@ export interface Layer {
   description: string
   target_value: string | null
   current_value: string | null
+  due_date: string | null
   status: "active" | "done" | "archived"
   is_deleted: boolean
   created_at: string
@@ -27,6 +28,40 @@ export interface Layer {
 
 export interface LayerNode extends Layer {
   children: LayerNode[]
+}
+
+export interface Goal {
+  id: string
+  user_id: string
+  name: string
+  description: string
+  target_value: string | null
+  current_value: string | null
+  due_date: string | null
+  status: "active" | "done" | "archived"
+  is_deleted: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface GoalWithCounts extends Goal {
+  task_count: number
+  done_count: number
+}
+
+export interface Task {
+  id: string
+  user_id: string
+  goal_id: string
+  name: string
+  label: string | null
+  description: string
+  target_value: string | null
+  current_value: string | null
+  status: "active" | "done" | "archived"
+  is_deleted: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface ApiResponse<T> {

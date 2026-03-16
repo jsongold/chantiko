@@ -54,7 +54,7 @@ def create_layer(
 
         if existing is not None:
             return error_response(
-                f"A layer with the name '{body.name}' already exists",
+                "A layer with that name already exists",
                 status_code=409,
             )
 

@@ -6,7 +6,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress"
+
 import { Button } from "@/components/ui/button"
 import { ChevronRightIcon, Trash2Icon } from "lucide-react"
 import { TaskItem } from "@/components/goals/task-item"
@@ -17,40 +17,11 @@ interface GoalNodeProps {
   node: LayerNode
   onToggleTask: (id: string, done: boolean) => void
   onDelete: (id: string) => void
+  onEdit?: (layer: LayerNode) => void
 }
 
-function computeProgress(node: LayerNode): {
-  completed: number
-  total: number
-} {
-  const tasks = node.children.filter((c) => c.type === "task")
-  const childGoals = node.children.filter((c) => c.type === "goal")
-
-  const directCompleted = tasks.filter((t) => t.status === "done").length
-  const directTotal = tasks.length
-
-  const nested = childGoals.reduce(
-    (acc, goal) => {
-      const result = computeProgress(goal)
-      return {
-        completed: acc.completed + result.completed,
-        total: acc.total + result.total,
-      }
-    },
-    { completed: 0, total: 0 }
-  )
-
-  return {
-    completed: directCompleted + nested.completed,
-    total: directTotal + nested.total,
-  }
-}
-
-export function GoalNode({ node, onToggleTask, onDelete }: GoalNodeProps) {
+export function GoalNode({ node, onToggleTask, onDelete, onEdit }: GoalNodeProps) {
   const [isOpen, setIsOpen] = useState(true)
-
-  const { completed, total } = computeProgress(node)
-  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
 
   const childGoals = node.children.filter((c) => c.type === "goal")
   const childTasks = node.children.filter((c) => c.type === "task")
@@ -75,14 +46,19 @@ export function GoalNode({ node, onToggleTask, onDelete }: GoalNodeProps) {
             <div className="size-7" />
           )}
 
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium leading-snug">{node.name}</p>
-            {node.description ? (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {node.description}
-              </p>
-            ) : null}
-          </div>
+          <p
+            className="flex-1 min-w-0 text-sm font-medium leading-snug cursor-pointer active:opacity-70"
+            onClick={() => onEdit?.(node)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                onEdit?.(node)
+              }
+            }}
+          >
+            {node.name}
+          </p>
 
           <Button
             variant="ghost"
@@ -93,22 +69,6 @@ export function GoalNode({ node, onToggleTask, onDelete }: GoalNodeProps) {
             <Trash2Icon className="size-3.5 text-muted-foreground" />
           </Button>
         </div>
-
-        {total > 0 ? (
-          <div className="px-3 pb-3">
-            <Progress value={percentage}>
-              <ProgressLabel className="sr-only">
-                {node.name} progress
-              </ProgressLabel>
-              <ProgressValue>
-                {(formattedValue) => formattedValue ?? `${percentage}%`}
-              </ProgressValue>
-            </Progress>
-            <p className="mt-1 text-xs text-muted-foreground text-right">
-              {completed}/{total} tasks
-            </p>
-          </div>
-        ) : null}
 
         {hasChildren ? (
           <CollapsibleContent>
@@ -121,6 +81,7 @@ export function GoalNode({ node, onToggleTask, onDelete }: GoalNodeProps) {
                       task={task}
                       onToggle={onToggleTask}
                       onDelete={onDelete}
+                      onEdit={onEdit}
                     />
                   ))}
                 </div>
@@ -134,6 +95,7 @@ export function GoalNode({ node, onToggleTask, onDelete }: GoalNodeProps) {
                       node={goal}
                       onToggleTask={onToggleTask}
                       onDelete={onDelete}
+                      onEdit={onEdit}
                     />
                   ))}
                 </div>

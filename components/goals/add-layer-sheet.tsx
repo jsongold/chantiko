@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -31,6 +32,7 @@ const addLayerSchema = z.object({
   description: z.string().max(500),
   parent: z.string().nullable(),
   target_value: z.string().nullable(),
+  due_date: z.string().nullable(),
 })
 
 type AddLayerFormValues = z.infer<typeof addLayerSchema>
@@ -40,6 +42,7 @@ interface AddLayerSheetProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (data: AddLayerFormValues) => void
   existingLayers: Layer[]
+  layer?: Layer | null
 }
 
 export type { AddLayerFormValues }
@@ -49,7 +52,9 @@ export function AddLayerSheet({
   onOpenChange,
   onSubmit,
   existingLayers,
+  layer,
 }: AddLayerSheetProps) {
+  const isEditMode = layer !== null && layer !== undefined
   const goalLayers = existingLayers.filter((l) => l.type === "goal")
 
   const form = useForm<AddLayerFormValues>({
@@ -60,8 +65,31 @@ export function AddLayerSheet({
       description: "",
       parent: null,
       target_value: null,
+      due_date: null,
     },
   })
+
+  useEffect(() => {
+    if (layer) {
+      form.reset({
+        type: layer.type,
+        name: layer.name,
+        description: layer.description ?? "",
+        parent: layer.parent,
+        target_value: layer.target_value,
+        due_date: layer.due_date ?? null,
+      })
+    } else {
+      form.reset({
+        type: "goal",
+        name: "",
+        description: "",
+        parent: null,
+        target_value: null,
+        due_date: null,
+      })
+    }
+  }, [layer, form])
 
   const handleSubmit = (values: AddLayerFormValues) => {
     onSubmit(values)
@@ -73,9 +101,11 @@ export function AddLayerSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Add Goal or Task</SheetTitle>
+          <SheetTitle>{isEditMode ? "Edit Goal or Task" : "Add Goal or Task"}</SheetTitle>
           <SheetDescription>
-            Create a new goal to track or a task to complete.
+            {isEditMode
+              ? "Update this goal or task."
+              : "Create a new goal to track or a task to complete."}
           </SheetDescription>
         </SheetHeader>
 
@@ -170,9 +200,20 @@ export function AddLayerSheet({
             />
           </div>
 
+          {form.watch("type") === "goal" ? (
+            <div className="space-y-2">
+              <Label htmlFor="layer-due-date">Due Date (optional)</Label>
+              <Input
+                id="layer-due-date"
+                type="date"
+                {...form.register("due_date")}
+              />
+            </div>
+          ) : null}
+
           <SheetFooter>
             <Button type="submit" className="w-full">
-              Create
+              {isEditMode ? "Update" : "Create"}
             </Button>
           </SheetFooter>
         </form>

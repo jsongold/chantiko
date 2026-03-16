@@ -16,10 +16,10 @@ class ActivityCreate(BaseModel):
 
 
 class ActivityUpdate(BaseModel):
-    title: Optional[str] = None
-    value: Optional[str] = None
-    value_unit: Optional[str] = None
-    category: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    value: Optional[str] = Field(None, min_length=1, max_length=100)
+    value_unit: Optional[str] = Field(None, max_length=50)
+    category: Optional[str] = Field(None, min_length=1, max_length=100)
 
 
 # ---------------------------------------------------------------------------
@@ -33,16 +33,63 @@ class LayerCreate(BaseModel):
     description: str = Field("", max_length=500)
     target_value: Optional[str] = Field(None, max_length=100)
     current_value: Optional[str] = Field(None, max_length=100)
+    due_date: Optional[str] = None
     status: Literal["active", "done"] = "active"
 
 
 class LayerUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
     parent: Optional[str] = None
-    description: Optional[str] = None
-    target_value: Optional[str] = None
-    current_value: Optional[str] = None
-    status: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=500)
+    target_value: Optional[str] = Field(None, max_length=100)
+    current_value: Optional[str] = Field(None, max_length=100)
+    due_date: Optional[str] = None
+    status: Optional[Literal["active", "done", "archived"]] = None
+
+
+# ---------------------------------------------------------------------------
+# Goal schemas
+# ---------------------------------------------------------------------------
+
+class GoalCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    description: str = Field("", max_length=500)
+    target_value: Optional[str] = Field(None, max_length=100)
+    current_value: Optional[str] = Field(None, max_length=100)
+    due_date: Optional[str] = None
+    status: Literal["active", "done"] = "active"
+
+
+class GoalUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=500)
+    target_value: Optional[str] = Field(None, max_length=100)
+    current_value: Optional[str] = Field(None, max_length=100)
+    due_date: Optional[str] = None
+    status: Optional[Literal["active", "done", "archived"]] = None
+
+
+# ---------------------------------------------------------------------------
+# Task schemas
+# ---------------------------------------------------------------------------
+
+class TaskCreate(BaseModel):
+    goal_id: str
+    name: str = Field(..., min_length=1, max_length=200)
+    label: Optional[str] = Field(None, max_length=100)
+    description: str = Field("", max_length=500)
+    target_value: Optional[str] = Field(None, max_length=100)
+    current_value: Optional[str] = Field(None, max_length=100)
+    status: Literal["active", "done"] = "active"
+
+
+class TaskUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    label: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    target_value: Optional[str] = Field(None, max_length=100)
+    current_value: Optional[str] = Field(None, max_length=100)
+    status: Optional[Literal["active", "done", "archived"]] = None
 
 
 # ---------------------------------------------------------------------------

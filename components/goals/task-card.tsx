@@ -3,21 +3,21 @@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Trash2Icon } from "lucide-react"
-import type { Layer, LayerNode } from "@/types"
+import type { Task } from "@/types"
 import { cn } from "@/lib/utils"
 
-interface TaskItemProps {
-  task: Layer
+interface TaskCardProps {
+  task: Task
   onToggle: (id: string, done: boolean) => void
   onDelete: (id: string) => void
-  onEdit?: (layer: LayerNode) => void
+  onEdit: (task: Task) => void
 }
 
-export function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemProps) {
+export function TaskCard({ task, onToggle, onDelete, onEdit }: TaskCardProps) {
   const isDone = task.status === "done"
 
   return (
-    <div className="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/50">
+    <div className="flex items-start gap-3 rounded-lg border bg-card px-3 py-2.5">
       <Checkbox
         checked={isDone}
         onCheckedChange={(checked) => {
@@ -25,22 +25,27 @@ export function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemProps) {
         }}
         className="mt-0.5"
       />
-      <p
+      <div
         className={cn(
-          "flex-1 min-w-0 text-sm leading-snug cursor-pointer active:opacity-70",
+          "flex-1 min-w-0 cursor-pointer active:opacity-70",
           isDone && "line-through text-muted-foreground"
         )}
-        onClick={() => onEdit?.({ ...task, children: [] } as LayerNode)}
+        onClick={() => onEdit(task)}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            onEdit?.({ ...task, children: [] } as LayerNode)
+            onEdit(task)
           }
         }}
       >
-        {task.name}
-      </p>
+        <p className="text-sm leading-snug">{task.name}</p>
+        {task.description ? (
+          <p className="mt-0.5 text-xs text-muted-foreground truncate">
+            {task.description}
+          </p>
+        ) : null}
+      </div>
       <Button
         variant="ghost"
         size="icon-sm"
