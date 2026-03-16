@@ -29,8 +29,10 @@ def _get_layer_for_user(
     return session.exec(stmt).first()
 
 
-def _soft_delete_descendants(session: Session, user_id: UUID, parent_name: str) -> None:
+def _soft_delete_descendants(session: Session, user_id: UUID, parent_name: str, depth: int = 0) -> None:
     """Recursively soft-delete all layers whose parent chain leads to parent_name."""
+    if depth >= 20:
+        return
     children = session.exec(
         select(Layer)
         .where(Layer.user_id == user_id)
@@ -43,7 +45,7 @@ def _soft_delete_descendants(session: Session, user_id: UUID, parent_name: str) 
         child.is_deleted = True
         child.updated_at = now
         session.add(child)
-        _soft_delete_descendants(session, user_id, child.name)
+        _soft_delete_descendants(session, user_id, child.name, depth + 1)
 
 
 @app.patch("/api/layers/{id}")

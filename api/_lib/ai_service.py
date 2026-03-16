@@ -78,8 +78,11 @@ def _call_model(
     )
 
     if model in ANTHROPIC_MODELS:
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY not configured")
         client = anthropic.Anthropic(
-            api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+            api_key=api_key,
         )
         response = client.messages.create(
             model=model,
@@ -89,8 +92,11 @@ def _call_model(
         )
         raw_text = response.content[0].text.strip()
     else:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY not configured")
         client = OpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY", ""),
+            api_key=api_key,
         )
         response = client.chat.completions.create(
             model=model,
