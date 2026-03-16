@@ -22,6 +22,8 @@ class Activity(SQLModel, table=True):
     value: str = Field(default="")
     value_unit: Optional[str] = Field(default=None)
     category: str = Field(default="Other")
+    goal_id: Optional[uuid.UUID] = Field(default=None, index=True)
+    task_id: Optional[uuid.UUID] = Field(default=None, index=True)
     is_deleted: bool = Field(default=False)
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)

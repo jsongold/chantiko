@@ -46,6 +46,8 @@ def update_activity(
             return error_response("No fields to update")
 
         for field, value in update_data.items():
+            if field in ("goal_id", "task_id") and value is not None:
+                value = UUID(value)
             setattr(activity, field, value)
         activity.updated_at = datetime.now(timezone.utc)
 

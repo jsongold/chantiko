@@ -13,6 +13,8 @@ class ActivityCreate(BaseModel):
     value: str = Field(..., min_length=1, max_length=100)
     value_unit: Optional[str] = Field(None, max_length=50)
     category: str = Field("Other", min_length=1, max_length=100)
+    goal_id: Optional[str] = None
+    task_id: Optional[str] = None
 
 
 class ActivityUpdate(BaseModel):
@@ -20,6 +22,8 @@ class ActivityUpdate(BaseModel):
     value: Optional[str] = Field(None, min_length=1, max_length=100)
     value_unit: Optional[str] = Field(None, max_length=50)
     category: Optional[str] = Field(None, min_length=1, max_length=100)
+    goal_id: Optional[str] = None
+    task_id: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
