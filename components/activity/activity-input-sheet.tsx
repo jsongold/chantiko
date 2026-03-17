@@ -81,6 +81,7 @@ export function ActivityInputSheet({
     value_unit: string | null
     category: string
     goal_id: string | null
+    task_id: string | null
   } | null>(null)
   const [suggestionLoading, setSuggestionLoading] = useState(false)
   const [suggestionDismissed, setSuggestionDismissed] = useState(false)
@@ -178,9 +179,13 @@ export function ActivityInputSheet({
           value_unit: string | null
           category: string
           goal_id: string | null
+          task_id: string | null
         }>("/ai/suggest-activity", {
           title_input: trimmed,
-          context: { goals: goals.map((g) => ({ id: g.id, name: g.name })) },
+          context: {
+            goals: goals.map((g) => ({ id: g.id, name: g.name })),
+            tasks: tasks.map((t) => ({ id: t.id, name: t.name })),
+          },
         })
         .then((res) => {
           if (res.success && res.data) {
@@ -333,6 +338,13 @@ export function ActivityInputSheet({
                           {goals.find((g) => g.id === aiSuggestion.goal_id)?.name}
                         </span>
                       )}
+                    {aiSuggestion.task_id &&
+                      tasks.find((t) => t.id === aiSuggestion.task_id) && (
+                        <span className="rounded bg-background px-1.5 py-0.5 border">
+                          Task:{" "}
+                          {tasks.find((t) => t.id === aiSuggestion.task_id)?.name}
+                        </span>
+                      )}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -346,6 +358,7 @@ export function ActivityInputSheet({
                         if (s.value_unit) setValue("value_unit", s.value_unit)
                         if (s.category) setValue("category", s.category, { shouldValidate: true })
                         if (s.goal_id) setValue("goal_id", s.goal_id)
+                        if (s.task_id) setValue("task_id", s.task_id)
                         setAISuggestion(null)
                       }}
                     >

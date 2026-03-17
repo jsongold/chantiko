@@ -167,13 +167,16 @@ Output format:
   "value": "numeric or text value (e.g. '30')",
   "value_unit": "one of the allowed units or null",
   "category": "one of the allowed categories",
-  "goal_id": null
+  "goal_id": "uuid of matching goal from context, or null",
+  "task_id": "uuid of matching task from context, or null"
 }
 
 Rules:
 - "value_unit" must be one of: "minutes", "hours", "reps", "sets", "times", "km", "miles", "steps", "kg", "lbs", "pages", "calories" — or null
+- ALWAYS try to infer "value_unit" from the input. E.g. "workout" → "minutes", "run 5km" → "km", "read" → "pages"
 - "category" must be one of: "Exercise", "Study", "Work", "Other"
 - If "goal_id" can be inferred from context goals, set it; otherwise null
+- If "task_id" can be inferred from context tasks, set it; otherwise null
 - "value" must be a non-empty string
 - If you cannot parse a value, use "1"
 """
