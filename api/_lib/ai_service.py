@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 
 import anthropic
+
+logger = logging.getLogger(__name__)
 from openai import OpenAI
 
 ALLOWED_MODELS = {
@@ -110,12 +113,18 @@ def _call_model(
         )
         raw_text = response.choices[0].message.content.strip()
 
+    if raw_text.startswith("```"):
+        lines = raw_text.splitlines()
+        raw_text = "\n".join(
+            line for line in lines if not line.strip().startswith("```")
+        ).strip()
+
     try:
         return json.loads(raw_text)
     except json.JSONDecodeError:
         return {
             "operations": [],
-            "summary": "Failed to parse AI response as JSON.",
+            "summary": "Could not understand the command.",
         }
 
 
@@ -213,12 +222,20 @@ def _call_chat_model(
         )
         raw_text = response.choices[0].message.content.strip()
 
+    # Strip markdown code fences if present (e.g. ```json ... ```)
+    if raw_text.startswith("```"):
+        lines = raw_text.splitlines()
+        raw_text = "\n".join(
+            line for line in lines if not line.strip().startswith("```")
+        ).strip()
+
     try:
         return json.loads(raw_text)
     except json.JSONDecodeError:
+        logger.warning("Failed to parse AI response as JSON: %s", raw_text[:200])
         return {
             "operations": [],
-            "summary": "Failed to parse AI response as JSON.",
+            "summary": "I couldn't understand that request. Try something like 'log 30 min run' or 'add a goal to read 10 books'.",
         }
 
 
