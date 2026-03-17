@@ -151,8 +151,10 @@ Rules:
 - "data" is required for "create" and "update" — include only changed fields
 - For activity "category", use only: "Exercise", "Study", "Work", "Other"
 - For activity "value_unit", use only: "minutes", "hours", "reps", "sets", "times", "km", "miles", "steps", "kg", "lbs", "pages", "calories", or null
+- For goals: ALWAYS extract "target_value" (e.g. "1 mil" → "1000000", "10 books" → "10") and "due_date" (ISO format YYYY-MM-DD, e.g. "in 1 year" → one year from today) when mentioned. Give the goal a clean short "name" (e.g. "Save 1 million", "Read 10 books").
 - Context may include a "page" field ("activities", "goals", or "tasks"). Use it to infer the default entity when ambiguous. For example, on the "goals" page, "make 1 mil in 2 years" means create a goal.
 - Always try to create an operation. Only return empty operations if the command is truly nonsensical.
+- Today's date is provided in context as "today" if available. Use it to compute relative dates.
 """
 
 SUGGEST_ACTIVITY_SYSTEM_PROMPT = """You are an assistant that parses a plain-language activity title and extracts structured fields.

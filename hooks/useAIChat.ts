@@ -75,6 +75,7 @@ export function useAIChat(handlers: OperationHandlers) {
 
   const sendCommand = useCallback(
     async (command: string, context: Record<string, unknown>) => {
+      const enrichedContext = { today: new Date().toISOString().slice(0, 10), ...context }
       const messages = useAIStore.getState().messages
       const history = messages.slice(-10).map((m) => ({
         role: m.role,
@@ -94,7 +95,7 @@ export function useAIChat(handlers: OperationHandlers) {
         const res = await api.post<ChatResponse>("/ai/chat", {
           command,
           history,
-          context,
+          context: enrichedContext,
           model: APP_LLM_MODEL,
         })
 
