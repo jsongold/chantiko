@@ -1,23 +1,23 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { useGoals } from "@/hooks/useGoals"
 import { GoalCard } from "@/components/goals/goal-card"
 import {
   AddGoalSheet,
   type GoalFormData,
 } from "@/components/goals/add-goal-sheet"
+import { GoalDetailSheet } from "@/components/goals/goal-detail-sheet"
 import { RouteButton } from "@/components/shared/route-button"
 import { EmptyState } from "@/components/shared/empty-state"
 import type { GoalWithCounts } from "@/types"
 
 export function GoalList() {
-  const router = useRouter()
   const { goals, isLoading, fetchGoals, createGoal, updateGoal, deleteGoal } =
     useGoals()
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [editingGoal, setEditingGoal] = useState<GoalWithCounts | null>(null)
+  const [detailGoal, setDetailGoal] = useState<GoalWithCounts | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   useEffect(() => {
     fetchGoals()
@@ -37,26 +37,19 @@ export function GoalList() {
   )
 
   const handleUpdate = useCallback(
-    async (data: GoalFormData) => {
-      if (!editingGoal) {
-        return
-      }
-      await updateGoal(editingGoal.id, {
+    async (id: string, data: GoalFormData) => {
+      await updateGoal(id, {
         name: data.name,
         description: data.description,
         target_value: data.target_value,
         due_date: data.due_date,
       })
-      setEditingGoal(null)
     },
-    [editingGoal, updateGoal]
+    [updateGoal]
   )
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     setSheetOpen(open)
-    if (!open) {
-      setEditingGoal(null)
-    }
   }, [])
 
   return (
@@ -82,10 +75,9 @@ export function GoalList() {
               <GoalCard
                 key={goal.id}
                 goal={goal}
-                onTap={() => router.push(`/g/${goal.id}/t`)}
-                onEdit={() => {
-                  setEditingGoal(goal)
-                  setSheetOpen(true)
+                onTap={() => {
+                  setDetailGoal(goal)
+                  setDetailOpen(true)
                 }}
                 onDelete={() => deleteGoal(goal.id)}
               />
@@ -95,18 +87,21 @@ export function GoalList() {
       </div>
 
       <RouteButton
-        onClick={() => {
-          setEditingGoal(null)
-          setSheetOpen(true)
-        }}
+        onClick={() => setSheetOpen(true)}
         aria-label="Add goal"
       />
 
       <AddGoalSheet
         open={sheetOpen}
         onOpenChange={handleSheetOpenChange}
-        onSubmit={editingGoal ? handleUpdate : handleCreate}
-        goal={editingGoal}
+        onSubmit={handleCreate}
+      />
+
+      <GoalDetailSheet
+        goal={detailGoal}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onUpdate={handleUpdate}
       />
     </>
   )

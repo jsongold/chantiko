@@ -3,17 +3,16 @@
 import { format, parseISO } from "date-fns"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { PencilIcon, Trash2Icon } from "lucide-react"
+import { Trash2Icon } from "lucide-react"
 import type { GoalWithCounts } from "@/types"
 
 interface GoalCardProps {
   goal: GoalWithCounts
   onTap: () => void
-  onEdit: () => void
   onDelete: () => void
 }
 
-export function GoalCard({ goal, onTap, onEdit, onDelete }: GoalCardProps) {
+export function GoalCard({ goal, onTap, onDelete }: GoalCardProps) {
   const progress =
     goal.task_count > 0
       ? Math.round((goal.done_count / goal.task_count) * 100)
@@ -52,17 +51,6 @@ export function GoalCard({ goal, onTap, onEdit, onDelete }: GoalCardProps) {
         )}
       </div>
 
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={(e) => {
-          e.stopPropagation()
-          onEdit()
-        }}
-        aria-label={`Edit goal ${goal.name}`}
-      >
-        <PencilIcon className="size-3.5 text-muted-foreground" />
-      </Button>
       <Button
         variant="ghost"
         size="icon-sm"
