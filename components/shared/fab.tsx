@@ -14,7 +14,10 @@ interface FabProps {
 export function Fab({ onClick, icon: Icon, className, label = "Action" }: FabProps) {
   return (
     <Button
-      onClick={onClick}
+      onClick={(e) => {
+        onClick()
+        e.currentTarget.blur()
+      }}
       size="icon-lg"
       className={cn(
         "fixed bottom-20 left-1/2 -translate-x-1/2 z-40 rounded-full size-12 shadow-md",
