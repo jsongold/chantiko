@@ -16,13 +16,26 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
 import type { Task } from "@/types"
+
+export interface GoalOption {
+  id: string
+  name: string
+}
 
 const taskFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(500),
   label: z.string().nullable(),
   due_date: z.string().nullable(),
+  goal_id: z.string().nullable(),
 })
 
 export type TaskFormData = z.infer<typeof taskFormSchema>
@@ -33,6 +46,8 @@ interface AddTaskSheetProps {
   onSubmit: (data: TaskFormData) => void
   task?: Task | null
   existingLabels?: string[]
+  goals?: GoalOption[]
+  defaultGoalId?: string | null
 }
 
 export function AddTaskSheet({
@@ -41,6 +56,8 @@ export function AddTaskSheet({
   onSubmit,
   task,
   existingLabels = [],
+  goals = [],
+  defaultGoalId = null,
 }: AddTaskSheetProps) {
   const isEditMode = task !== null && task !== undefined
 
@@ -51,6 +68,7 @@ export function AddTaskSheet({
       description: "",
       label: null,
       due_date: null,
+      goal_id: defaultGoalId,
     },
   })
 
@@ -61,6 +79,7 @@ export function AddTaskSheet({
         description: task.description ?? "",
         label: task.label,
         due_date: task.due_date ? task.due_date.slice(0, 10) : null,
+        goal_id: task.goal_id,
       })
     } else {
       form.reset({
@@ -68,9 +87,10 @@ export function AddTaskSheet({
         description: "",
         label: null,
         due_date: null,
+        goal_id: defaultGoalId ?? goals[0]?.id ?? null,
       })
     }
-  }, [task, form])
+  }, [task, form, defaultGoalId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (values: TaskFormData) => {
     onSubmit(values)
@@ -141,6 +161,29 @@ export function AddTaskSheet({
               </datalist>
             )}
           </div>
+
+          {goals.length > 0 && (
+            <div className="space-y-2">
+              <Label>Goal</Label>
+              <Select
+                value={form.watch("goal_id") ?? ""}
+                onValueChange={(value) =>
+                  form.setValue("goal_id", value || null)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {goals.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <SheetFooter>
             <Button type="submit" className="w-full">

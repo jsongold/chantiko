@@ -31,20 +31,22 @@ def _build_app():
     @app.get("/api/tasks")
     def list_tasks(
         user_id: CurrentUserId,
-        goal_id: str = Query(...),
+        goal_id: str | None = Query(None),
         session: Session = Depends(get_session),
     ):
         try:
             uid = UUID(user_id)
-            gid = UUID(goal_id)
 
             stmt = (
                 select(Task)
                 .where(Task.user_id == uid)
-                .where(Task.goal_id == gid)
                 .where(Task.is_deleted == False)  # noqa: E712
-                .order_by(Task.created_at)
             )
+            if goal_id:
+                stmt = stmt.where(Task.goal_id == UUID(goal_id)).order_by(Task.created_at)
+            else:
+                stmt = stmt.order_by(Task.due_date.desc().nulls_last(), Task.created_at.desc())
+
             tasks = session.exec(stmt).all()
             data = [task.model_dump(mode="json") for task in tasks]
 
@@ -71,6 +73,7 @@ def _build_app():
                 description=body.description,
                 target_value=body.target_value,
                 current_value=body.current_value,
+                due_date=datetime.fromisoformat(body.due_date) if body.due_date else None,
                 status=body.status,
             )
             session.add(task)
@@ -100,6 +103,8 @@ def _build_app():
                 return error_response("No fields to update")
 
             for field, value in update_data.items():
+                if field == "due_date" and isinstance(value, str):
+                    value = datetime.fromisoformat(value)
                 setattr(task, field, value)
             task.updated_at = datetime.now(timezone.utc)
             session.add(task)
@@ -136,7 +141,6 @@ def _build_app():
             return error_response("Failed to delete task", status_code=500)
 
     return app
-
 
 
 app = _build_app()
