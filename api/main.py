@@ -18,8 +18,6 @@ from api.ai.goal_edit import app as ai_goal_app
 
 activities_id_mod = importlib.import_module("api.activities.[id]")
 layers_id_mod = importlib.import_module("api.layers.[id]")
-goals_id_mod = importlib.import_module("api.goals.[id]")
-tasks_id_mod = importlib.import_module("api.tasks.[id]")
 
 app = FastAPI()
 
@@ -38,9 +36,7 @@ sub_apps = [
     layers_app,
     layers_id_mod.app,
     goals_app,
-    goals_id_mod.app,
     tasks_app,
-    tasks_id_mod.app,
     ai_activity_app,
     ai_goal_app,
 ]
