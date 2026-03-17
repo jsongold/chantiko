@@ -30,7 +30,7 @@ export function useTasks(goalId: string) {
   }, [goalId, setLoading, setTasks])
 
   const createTask = useCallback(
-    async (data: { name: string; description?: string; label?: string | null; status?: string }) => {
+    async (data: { name: string; description?: string; label?: string | null; due_date?: string | null; status?: string }) => {
       const response = await api.post<Task>("/tasks", {
         ...data,
         goal_id: goalId,

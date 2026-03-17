@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { PencilIcon, Trash2Icon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { format, parseISO } from "date-fns"
 import type { Task } from "@/types"
 
 interface TaskCardProps {
@@ -41,6 +42,11 @@ export function TaskCard({ task, onToggle, onTap, onDelete }: TaskCardProps) {
         {task.description && (
           <span className="block text-xs text-muted-foreground truncate mt-0.5">
             {task.description}
+          </span>
+        )}
+        {task.due_date && (
+          <span className="text-xs text-muted-foreground mt-0.5">
+            {format(parseISO(task.due_date), "MMM d")}
           </span>
         )}
       </p>

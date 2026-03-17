@@ -10,6 +10,8 @@ def _build_app():
     from fastapi import Depends, FastAPI, Path, Query
     from sqlmodel import Session, select
 
+    from datetime import datetime as dt_cls
+
     from api._lib.auth import CurrentUserId
     from api._lib.db import get_session
     from api._lib.models import Task
@@ -75,6 +77,7 @@ def _build_app():
                 description=body.description,
                 target_value=body.target_value,
                 current_value=body.current_value,
+                due_date=dt_cls.fromisoformat(body.due_date) if body.due_date else None,
                 status=body.status,
             )
             session.add(task)
@@ -105,6 +108,8 @@ def _build_app():
                 return error_response("No fields to update")
 
             for field, value in update_data.items():
+                if field == "due_date" and isinstance(value, str):
+                    value = dt_cls.fromisoformat(value)
                 setattr(task, field, value)
             task.updated_at = datetime.now(timezone.utc)
             session.add(task)

@@ -22,6 +22,7 @@ const taskFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(500),
   label: z.string().nullable(),
+  due_date: z.string().nullable(),
 })
 
 export type TaskFormData = z.infer<typeof taskFormSchema>
@@ -49,6 +50,7 @@ export function AddTaskSheet({
       name: "",
       description: "",
       label: null,
+      due_date: null,
     },
   })
 
@@ -58,12 +60,14 @@ export function AddTaskSheet({
         name: task.name,
         description: task.description ?? "",
         label: task.label,
+        due_date: task.due_date ? task.due_date.slice(0, 10) : null,
       })
     } else {
       form.reset({
         name: "",
         description: "",
         label: null,
+        due_date: null,
       })
     }
   }, [task, form])
@@ -109,6 +113,15 @@ export function AddTaskSheet({
               id="task-description"
               placeholder="Optional description..."
               {...form.register("description")}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="task-due-date">Due date (optional)</Label>
+            <Input
+              id="task-due-date"
+              type="date"
+              {...form.register("due_date")}
             />
           </div>
 
