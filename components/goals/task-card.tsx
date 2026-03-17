@@ -2,7 +2,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
-import { Trash2Icon } from "lucide-react"
+import { PencilIcon, Trash2Icon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Task } from "@/types"
 
@@ -44,6 +44,14 @@ export function TaskCard({ task, onToggle, onTap, onDelete }: TaskCardProps) {
           </span>
         )}
       </p>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onTap}
+        aria-label={`Edit task ${task.name}`}
+      >
+        <PencilIcon className="size-3.5 text-muted-foreground" />
+      </Button>
       <Button
         variant="ghost"
         size="icon-sm"
