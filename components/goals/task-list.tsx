@@ -233,6 +233,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
             },
           }}
           context={{
+            page: "tasks",
             goal_id: goalId,
             goal_name: goalName,
             tasks: tasks.map((t) => ({ id: t.id, name: t.name, status: t.status })),

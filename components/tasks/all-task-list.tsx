@@ -257,6 +257,7 @@ export function AllTaskList() {
             },
           }}
           context={{
+            page: "tasks",
             goals: goals.map((g) => ({ id: g.id, name: g.name })),
             tasks: tasks.slice(0, 10).map((t) => ({ id: t.id, name: t.name, status: t.status })),
           }}

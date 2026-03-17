@@ -151,7 +151,8 @@ Rules:
 - "data" is required for "create" and "update" — include only changed fields
 - For activity "category", use only: "Exercise", "Study", "Work", "Other"
 - For activity "value_unit", use only: "minutes", "hours", "reps", "sets", "times", "km", "miles", "steps", "kg", "lbs", "pages", "calories", or null
-- If the command is unclear or impossible, return {"operations": [], "summary": "Could not understand the command."}
+- Context may include a "page" field ("activities", "goals", or "tasks"). Use it to infer the default entity when ambiguous. For example, on the "goals" page, "make 1 mil in 2 years" means create a goal.
+- Always try to create an operation. Only return empty operations if the command is truly nonsensical.
 """
 
 SUGGEST_ACTIVITY_SYSTEM_PROMPT = """You are an assistant that parses a plain-language activity title and extracts structured fields.

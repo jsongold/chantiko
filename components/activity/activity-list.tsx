@@ -273,6 +273,7 @@ export function ActivityList() {
             },
           }}
           context={{
+            page: "activities",
             recent_activities: activities.slice(0, 10).map((a) => ({
               id: a.id,
               title: a.title,

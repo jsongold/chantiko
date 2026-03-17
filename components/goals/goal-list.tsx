@@ -140,7 +140,7 @@ export function GoalList() {
               }
             },
           }}
-          context={{ goals: goals.map((g) => ({ id: g.id, name: g.name })) }}
+          context={{ page: "goals", goals: goals.map((g) => ({ id: g.id, name: g.name })) }}
         />
       )}
     </>
