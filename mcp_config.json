@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "chantiko": {
+      "command": "python",
+      "args": ["-m", "api._lib.mcp_server"],
+      "cwd": "/path/to/chantiko",
+      "env": {
+        "DATABASE_URL": "postgresql://...",
+        "MCP_USER_ID": "your-supabase-user-uuid"
+      }
+    }
+  }
+}

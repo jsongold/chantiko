@@ -12,4 +12,5 @@ dependencies = [
     "httpx",
     "psycopg2-binary",
     "mangum",
+    "mcp",
 ]
