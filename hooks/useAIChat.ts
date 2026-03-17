@@ -6,6 +6,8 @@ import { useSettingsStore } from "@/store/settingsStore"
 import { useAIStore, type ChatMessage } from "@/store/aiStore"
 import type { AIEditResponse, Operation } from "@/types"
 
+const APP_LLM_MODEL = "gpt-4o-mini"
+
 interface OperationHandlers {
   onCreate?: (entity: string, data: Record<string, unknown>) => Promise<void>
   onUpdate?: (entity: string, id: string, data: Record<string, unknown>) => Promise<void>
@@ -24,7 +26,6 @@ interface ChatResponse {
 }
 
 export function useAIChat(handlers: OperationHandlers) {
-  const llmModel = useSettingsStore((s) => s.llmModel)
   const aiMode = useSettingsStore((s) => s.aiMode)
   const { setMessages, addMessage, updateMessageStatus, setLoading, setSending } =
     useAIStore()
@@ -94,7 +95,7 @@ export function useAIChat(handlers: OperationHandlers) {
           command,
           history,
           context,
-          model: llmModel,
+          model: APP_LLM_MODEL,
         })
 
         if (!res.success || !res.data) {
@@ -142,7 +143,7 @@ export function useAIChat(handlers: OperationHandlers) {
         setSending(false)
       }
     },
-    [llmModel, aiMode, addMessage, setSending, setMessages, applyOperations, updateMessageStatus]
+    [aiMode, addMessage, setSending, setMessages, applyOperations, updateMessageStatus]
   )
 
   const applyPending = useCallback(async () => {

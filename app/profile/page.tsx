@@ -1,9 +1,9 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import { AppShell } from "@/components/layout/app-shell"
 import { useAuth } from "@/hooks/useAuth"
-import { useSettingsStore, LLM_MODELS, type LLMModel } from "@/store/settingsStore"
+import { useSettingsStore, type AIMode } from "@/store/settingsStore"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -47,7 +47,11 @@ function UserAvatar({ avatarUrl, displayName }: { avatarUrl: string | null; disp
 
 export default function ProfilePage() {
   const { user, isLoading } = useAuth()
-  const { aiEnabled, setAIEnabled, llmModel, setLLMModel } = useSettingsStore()
+  const { aiEnabled, setAIEnabled, aiMode, setAIMode, syncFromServer } = useSettingsStore()
+
+  useEffect(() => {
+    syncFromServer()
+  }, [syncFromServer])
 
   const handleSignOut = useCallback(async () => {
     const supabase = createClient()
@@ -99,9 +103,7 @@ export default function ProfilePage() {
             <Checkbox
               id="ai-toggle"
               checked={aiEnabled}
-              onCheckedChange={(checked) => {
-                setAIEnabled(Boolean(checked))
-              }}
+              onCheckedChange={(checked) => setAIEnabled(Boolean(checked))}
             />
             <Label htmlFor="ai-toggle" className="font-normal">
               Enable AI features
@@ -110,20 +112,18 @@ export default function ProfilePage() {
 
           {aiEnabled && (
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">AI Model</Label>
+              <Label className="text-xs text-muted-foreground">AI Mode</Label>
               <Select
-                value={llmModel}
-                onValueChange={(val) => setLLMModel(val as LLMModel)}
+                value={aiMode}
+                onValueChange={(val) => setAIMode(val as AIMode)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LLM_MODELS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="manual">Manual — always open the form</SelectItem>
+                  <SelectItem value="ask">Ask — preview before applying</SelectItem>
+                  <SelectItem value="auto">Auto — apply immediately</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -13,8 +13,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { ChevronRightIcon } from "lucide-react"
-import { RouteButton } from "@/components/shared/route-button"
+import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { EmptyState } from "@/components/shared/empty-state"
+import { features } from "@/lib/features"
 import { cn } from "@/lib/utils"
 import type { Task } from "@/types"
 
@@ -53,6 +55,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
   const { tasks, isLoading, hasMore, fetchTasks, fetchMoreTasks, createTask, updateTask, deleteTask } =
     useTasks(goalId)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [aiChatOpen, setAIChatOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   useEffect(() => {
@@ -181,12 +184,13 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
         )}
       </div>
 
-      <RouteButton
-        onClick={() => {
+      <AddActivityFab
+        onManualOpen={() => {
           setEditingTask(null)
           setSheetOpen(true)
         }}
-        aria-label="Add task"
+        onAIOpen={() => setAIChatOpen(true)}
+        manualLabel="Add task"
       />
 
       <AddTaskSheet
@@ -196,6 +200,45 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
         task={editingTask}
         existingLabels={existingLabels}
       />
+
+      {features.aiChat && (
+        <AIChatSheet
+          open={aiChatOpen}
+          onOpenChange={setAIChatOpen}
+          handlers={{
+            onCreate: async (entity, data) => {
+              if (entity === "task") {
+                await createTask({
+                  name: String(data.name ?? ""),
+                  description: data.description != null ? String(data.description) : undefined,
+                  label: data.label != null ? String(data.label) : undefined,
+                  due_date: data.due_date != null ? String(data.due_date) : undefined,
+                  status: "active",
+                })
+              }
+            },
+            onUpdate: async (entity, id, data) => {
+              if (entity === "task") {
+                await updateTask(id, {
+                  name: data.name != null ? String(data.name) : undefined,
+                  description: data.description != null ? String(data.description) : undefined,
+                  label: data.label != null ? String(data.label) : undefined,
+                })
+              }
+            },
+            onDelete: async (entity, id) => {
+              if (entity === "task") {
+                await deleteTask(id)
+              }
+            },
+          }}
+          context={{
+            goal_id: goalId,
+            goal_name: goalName,
+            tasks: tasks.map((t) => ({ id: t.id, name: t.name, status: t.status })),
+          }}
+        />
+      )}
     </>
   )
 }

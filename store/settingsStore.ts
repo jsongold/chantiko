@@ -1,39 +1,45 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-
-export const LLM_MODELS = [
-  { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", provider: "Anthropic" },
-  { value: "claude-sonnet-4-5-20250514", label: "Claude Sonnet 4.5", provider: "Anthropic" },
-  { value: "gpt-4o-mini", label: "GPT-4o Mini", provider: "OpenAI" },
-  { value: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
-] as const
-
-export type LLMModel = (typeof LLM_MODELS)[number]["value"]
+import { api } from "@/lib/api"
 
 export type AIMode = "auto" | "ask" | "manual"
 
 interface SettingsState {
   aiEnabled: boolean
-  llmModel: LLMModel
   aiMode: AIMode
 }
 
 interface SettingsActions {
   setAIEnabled: (enabled: boolean) => void
-  setLLMModel: (model: LLMModel) => void
   setAIMode: (mode: AIMode) => void
+  syncFromServer: () => Promise<void>
 }
 
 export const useSettingsStore = create<SettingsState & SettingsActions>()(
   persist(
     (set) => ({
       aiEnabled: true,
-      llmModel: "gpt-4o-mini",
       aiMode: "ask" as AIMode,
 
-      setAIEnabled: (enabled) => set({ aiEnabled: enabled }),
-      setLLMModel: (model) => set({ llmModel: model }),
-      setAIMode: (mode) => set({ aiMode: mode }),
+      setAIEnabled: (enabled) => {
+        set({ aiEnabled: enabled })
+        api.patch("/settings", { ai_enabled: enabled }).catch(() => {})
+      },
+
+      setAIMode: (mode) => {
+        set({ aiMode: mode })
+        api.patch("/settings", { ai_mode: mode }).catch(() => {})
+      },
+
+      syncFromServer: async () => {
+        const res = await api.get<{ ai_mode: AIMode; ai_enabled: boolean }>("/settings")
+        if (res.success && res.data) {
+          set({
+            aiMode: res.data.ai_mode,
+            aiEnabled: res.data.ai_enabled,
+          })
+        }
+      },
     }),
     {
       name: "chantiko-settings",

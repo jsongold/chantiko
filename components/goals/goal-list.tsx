@@ -8,14 +8,17 @@ import {
   type GoalFormData,
 } from "@/components/goals/add-goal-sheet"
 import { GoalDetailSheet } from "@/components/goals/goal-detail-sheet"
-import { RouteButton } from "@/components/shared/route-button"
+import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { EmptyState } from "@/components/shared/empty-state"
+import { features } from "@/lib/features"
 import type { GoalWithCounts } from "@/types"
 
 export function GoalList() {
   const { goals, isLoading, fetchGoals, createGoal, updateGoal, deleteGoal } =
     useGoals()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [aiChatOpen, setAIChatOpen] = useState(false)
   const [detailGoal, setDetailGoal] = useState<GoalWithCounts | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
@@ -86,9 +89,10 @@ export function GoalList() {
         )}
       </div>
 
-      <RouteButton
-        onClick={() => setSheetOpen(true)}
-        aria-label="Add goal"
+      <AddActivityFab
+        onManualOpen={() => setSheetOpen(true)}
+        onAIOpen={() => setAIChatOpen(true)}
+        manualLabel="Add goal"
       />
 
       <AddGoalSheet
@@ -103,6 +107,42 @@ export function GoalList() {
         onOpenChange={setDetailOpen}
         onUpdate={handleUpdate}
       />
+
+      {features.aiChat && (
+        <AIChatSheet
+          open={aiChatOpen}
+          onOpenChange={setAIChatOpen}
+          handlers={{
+            onCreate: async (entity, data) => {
+              if (entity === "goal") {
+                await createGoal({
+                  name: String(data.name ?? ""),
+                  description: data.description != null ? String(data.description) : undefined,
+                  target_value: data.target_value != null ? String(data.target_value) : undefined,
+                  due_date: data.due_date != null ? String(data.due_date) : undefined,
+                  status: "active",
+                })
+              }
+            },
+            onUpdate: async (entity, id, data) => {
+              if (entity === "goal") {
+                await updateGoal(id, {
+                  name: data.name != null ? String(data.name) : undefined,
+                  description: data.description != null ? String(data.description) : undefined,
+                  target_value: data.target_value != null ? String(data.target_value) : undefined,
+                  due_date: data.due_date != null ? String(data.due_date) : undefined,
+                })
+              }
+            },
+            onDelete: async (entity, id) => {
+              if (entity === "goal") {
+                await deleteGoal(id)
+              }
+            },
+          }}
+          context={{ goals: goals.map((g) => ({ id: g.id, name: g.name })) }}
+        />
+      )}
     </>
   )
 }
