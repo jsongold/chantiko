@@ -20,9 +20,9 @@ vi.mock("@/components/shared/fab", () => ({
   ),
 }))
 
-import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { ChikoFab } from "@/components/shared/chiko-fab"
 
-describe("AddActivityFab", () => {
+describe("ChikoFab", () => {
   const onManualOpen = vi.fn()
   const onAIOpen = vi.fn()
 
@@ -33,12 +33,12 @@ describe("AddActivityFab", () => {
   })
 
   it("shows Bot icon label when aiMode is ask", () => {
-    render(<AddActivityFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
+    render(<ChikoFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
     expect(screen.getByRole("button", { name: /open ai chat/i })).toBeInTheDocument()
   })
 
   it("tap calls onAIOpen when aiMode is ask", () => {
-    render(<AddActivityFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
+    render(<ChikoFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
     fireEvent.click(screen.getByRole("button"))
     expect(onAIOpen).toHaveBeenCalledOnce()
     expect(onManualOpen).not.toHaveBeenCalled()
@@ -46,14 +46,14 @@ describe("AddActivityFab", () => {
 
   it("tap calls onAIOpen when aiMode is auto", () => {
     mockAIMode = "auto"
-    render(<AddActivityFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
+    render(<ChikoFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
     fireEvent.click(screen.getByRole("button"))
     expect(onAIOpen).toHaveBeenCalledOnce()
   })
 
   it("tap calls onManualOpen when aiMode is manual", () => {
     mockAIMode = "manual"
-    render(<AddActivityFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
+    render(<ChikoFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
     fireEvent.click(screen.getByRole("button"))
     expect(onManualOpen).toHaveBeenCalledOnce()
     expect(onAIOpen).not.toHaveBeenCalled()
@@ -62,7 +62,7 @@ describe("AddActivityFab", () => {
   it("tap calls onManualOpen when aiChat feature is disabled", () => {
     mockFeatures = { aiChat: false }
     mockAIMode = "ask"
-    render(<AddActivityFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
+    render(<ChikoFab onManualOpen={onManualOpen} onAIOpen={onAIOpen} />)
     fireEvent.click(screen.getByRole("button"))
     expect(onManualOpen).toHaveBeenCalledOnce()
     expect(onAIOpen).not.toHaveBeenCalled()

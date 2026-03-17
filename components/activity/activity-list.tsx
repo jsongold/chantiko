@@ -10,7 +10,7 @@ import {
   type ActivityFormData,
   activityFormSchema,
 } from "@/components/activity/activity-input-sheet"
-import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { useActivities } from "@/hooks/useActivities"
 import { AlertDialog } from "@/components/ui/alert-dialog"
@@ -217,7 +217,7 @@ export function ActivityList() {
         </div>
       )}
 
-      <AddActivityFab
+      <ChikoFab
         onManualOpen={() => {
           setEditingActivity(null)
           setSheetOpen(true)

@@ -8,7 +8,7 @@ import {
   type GoalFormData,
 } from "@/components/goals/add-goal-sheet"
 import { GoalDetailSheet } from "@/components/goals/goal-detail-sheet"
-import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { EmptyState } from "@/components/shared/empty-state"
 import { features } from "@/lib/features"
@@ -89,7 +89,7 @@ export function GoalList() {
         )}
       </div>
 
-      <AddActivityFab
+      <ChikoFab
         onManualOpen={() => setSheetOpen(true)}
         onAIOpen={() => setAIChatOpen(true)}
         manualLabel="Add goal"
