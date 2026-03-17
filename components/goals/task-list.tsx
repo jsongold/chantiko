@@ -152,7 +152,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
                     </span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="space-y-1 rounded-lg border bg-card">
+                    <div className="space-y-1">
                       {group.tasks.map((task) => (
                         <TaskCard
                           key={task.id}
