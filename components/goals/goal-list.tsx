@@ -8,6 +8,7 @@ import {
   AddGoalSheet,
   type GoalFormData,
 } from "@/components/goals/add-goal-sheet"
+import { AlertDialog } from "@/components/ui/alert-dialog"
 import { RouteButton } from "@/components/shared/route-button"
 import { EmptyState } from "@/components/shared/empty-state"
 import type { GoalWithCounts } from "@/types"
@@ -18,6 +19,7 @@ export function GoalList() {
     useGoals()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState<GoalWithCounts | null>(null)
+  const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchGoals()
@@ -87,7 +89,7 @@ export function GoalList() {
                   setEditingGoal(goal)
                   setSheetOpen(true)
                 }}
-                onDelete={() => deleteGoal(goal.id)}
+                onDelete={() => setDeletingGoalId(goal.id)}
               />
             ))}
           </div>
@@ -107,6 +109,18 @@ export function GoalList() {
         onOpenChange={handleSheetOpenChange}
         onSubmit={editingGoal ? handleUpdate : handleCreate}
         goal={editingGoal}
+      />
+      <AlertDialog
+        open={deletingGoalId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingGoalId(null) }}
+        title="Delete goal?"
+        description="This action cannot be undone. All tasks under this goal will also be removed."
+        onConfirm={() => {
+          if (deletingGoalId) {
+            deleteGoal(deletingGoalId)
+            setDeletingGoalId(null)
+          }
+        }}
       />
     </>
   )

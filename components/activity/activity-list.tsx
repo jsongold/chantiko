@@ -10,6 +10,7 @@ import {
   type ActivityFormData,
 } from "@/components/activity/activity-input-sheet"
 import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { AlertDialog } from "@/components/ui/alert-dialog"
 import { useActivities } from "@/hooks/useActivities"
 import { useGoalStore } from "@/store/goalStore"
 import { api } from "@/lib/api"
@@ -71,6 +72,7 @@ export function ActivityList() {
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null)
   const [historyTitles, setHistoryTitles] = useState<string[]>([])
   const [goals, setGoals] = useState<GoalWithCounts[]>([])
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -182,7 +184,7 @@ export function ActivityList() {
                 <ActivityCard
                   key={activity.id}
                   activity={activity}
-                  onDelete={deleteActivity}
+                  onDelete={(id: string) => setDeletingActivityId(id)}
                   onTap={handleTapActivity}
                   goalName={activity.goal_id ? goalMap.get(activity.goal_id) ?? null : null}
                 />
@@ -212,6 +214,18 @@ export function ActivityList() {
         historyTitles={historyTitles}
         activity={editingActivity}
         goals={goals.map((g) => ({ id: g.id, name: g.name }))}
+      />
+      <AlertDialog
+        open={deletingActivityId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingActivityId(null) }}
+        title="Delete activity?"
+        description="This action cannot be undone."
+        onConfirm={() => {
+          if (deletingActivityId) {
+            deleteActivity(deletingActivityId)
+            setDeletingActivityId(null)
+          }
+        }}
       />
     </>
   )
