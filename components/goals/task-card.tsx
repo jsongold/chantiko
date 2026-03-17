@@ -12,9 +12,10 @@ interface TaskCardProps {
   onToggle: () => void
   onTap: () => void
   onDelete: () => void
+  goalName?: string | null
 }
 
-export function TaskCard({ task, onToggle, onTap, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onToggle, onTap, onDelete, goalName }: TaskCardProps) {
   const isDone = task.status === "done"
 
   return (
@@ -44,9 +45,15 @@ export function TaskCard({ task, onToggle, onTap, onDelete }: TaskCardProps) {
             {task.description}
           </span>
         )}
+<<<<<<< HEAD
         {task.due_date && (
           <span className="text-xs text-muted-foreground mt-0.5">
             {format(parseISO(task.due_date), "MMM d")}
+=======
+        {goalName && (
+          <span className="text-xs text-muted-foreground/70 mt-0.5">
+            {goalName}
+>>>>>>> 6c44f9c (feat: add cross-goal tasks page with day grouping and navigation)
           </span>
         )}
       </p>
