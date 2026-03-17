@@ -1,15 +1,15 @@
 """Unified FastAPI app for local development.
 
-Run: uv run uvicorn api.main:app --reload --port 8000
+Run: uv run uvicorn api._lib.main:app --reload --port 8000
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.activities.index import app as activities_app
-from api.goals.index import app as goals_app
-from api.tasks.index import app as tasks_app
-from api.ai.index import app as ai_app
+from api.activities.index import _build_app as build_activities
+from api.goals.index import _build_app as build_goals
+from api.tasks.index import _build_app as build_tasks
+from api.ai.index import _build_app as build_ai
 
 app = FastAPI()
 
@@ -22,10 +22,10 @@ app.add_middleware(
 )
 
 sub_apps = [
-    activities_app,
-    goals_app,
-    tasks_app,
-    ai_app,
+    build_activities(),
+    build_goals(),
+    build_tasks(),
+    build_ai(),
 ]
 
 for sub_app in sub_apps:

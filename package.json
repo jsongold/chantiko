@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:api": "uv run --env-file .env.local uvicorn api.main:app --reload --port 8000",
+    "dev:api": "uv run --env-file .env.local uvicorn api._lib.main:app --reload --port 8000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
