@@ -6,7 +6,7 @@ import { useSettingsStore } from "@/store/settingsStore"
 import { useAIStore, type ChatMessage } from "@/store/aiStore"
 import type { AIEditResponse, Operation } from "@/types"
 
-const APP_LLM_MODEL = "gpt-4o-mini"
+const APP_LLM_MODEL = "gpt-4.1-nano"
 
 interface OperationHandlers {
   onCreate?: (entity: string, data: Record<string, unknown>) => Promise<void>
@@ -75,6 +75,7 @@ export function useAIChat(handlers: OperationHandlers) {
 
   const sendCommand = useCallback(
     async (command: string, context: Record<string, unknown>) => {
+      const enrichedContext = { today: new Date().toISOString().slice(0, 10), ...context }
       const messages = useAIStore.getState().messages
       const history = messages.slice(-10).map((m) => ({
         role: m.role,
@@ -94,7 +95,7 @@ export function useAIChat(handlers: OperationHandlers) {
         const res = await api.post<ChatResponse>("/ai/chat", {
           command,
           history,
-          context,
+          context: enrichedContext,
           model: APP_LLM_MODEL,
         })
 

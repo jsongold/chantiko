@@ -10,7 +10,7 @@ import {
   type ActivityFormData,
   activityFormSchema,
 } from "@/components/activity/activity-input-sheet"
-import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { useActivities } from "@/hooks/useActivities"
 import { AlertDialog } from "@/components/ui/alert-dialog"
@@ -217,7 +217,7 @@ export function ActivityList() {
         </div>
       )}
 
-      <AddActivityFab
+      <ChikoFab
         onManualOpen={() => {
           setEditingActivity(null)
           setSheetOpen(true)
@@ -256,13 +256,23 @@ export function ActivityList() {
           handlers={{
             onCreate: async (entity, data) => {
               if (entity === "activity") {
-                const parsed = activityFormSchema.safeParse(data)
+                const parsed = activityFormSchema.safeParse({
+                  task_id: null,
+                  goal_id: null,
+                  ...data,
+                  title: String(data.title || data.name || ""),
+                })
                 if (parsed.success) await createActivity(parsed.data)
               }
             },
             onUpdate: async (entity, id, data) => {
               if (entity === "activity") {
-                const parsed = activityFormSchema.safeParse(data)
+                const parsed = activityFormSchema.safeParse({
+                  task_id: null,
+                  goal_id: null,
+                  ...data,
+                  title: String(data.title || data.name || ""),
+                })
                 if (parsed.success) await updateActivity(id, parsed.data)
               }
             },
@@ -273,6 +283,7 @@ export function ActivityList() {
             },
           }}
           context={{
+            page: "activities",
             recent_activities: activities.slice(0, 10).map((a) => ({
               id: a.id,
               title: a.title,

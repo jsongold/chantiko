@@ -10,7 +10,7 @@ from openai import OpenAI
 ALLOWED_MODELS = {
     "claude-haiku-4-5-20251001",
     "claude-sonnet-4-5-20250514",
-    "gpt-4o-mini",
+    "gpt-4.1-nano",
     "gpt-4o",
 }
 
@@ -19,7 +19,7 @@ ANTHROPIC_MODELS = {
     "claude-sonnet-4-5-20250514",
 }
 
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-4.1-nano"
 
 ACTIVITY_SYSTEM_PROMPT = """You are an assistant that converts natural language commands into structured JSON operations on a user's activity list.
 
@@ -151,7 +151,10 @@ Rules:
 - "data" is required for "create" and "update" — include only changed fields
 - For activity "category", use only: "Exercise", "Study", "Work", "Other"
 - For activity "value_unit", use only: "minutes", "hours", "reps", "sets", "times", "km", "miles", "steps", "kg", "lbs", "pages", "calories", or null
-- If the command is unclear or impossible, return {"operations": [], "summary": "Could not understand the command."}
+- For goals: ALWAYS extract "target_value" (e.g. "1 mil" → "1000000", "10 books" → "10") and "due_date" (ISO format YYYY-MM-DD, e.g. "in 1 year" → one year from today) when mentioned. Give the goal a clean short "name" (e.g. "Save 1 million", "Read 10 books").
+- Context may include a "page" field ("activities", "goals", or "tasks"). Use it to infer the default entity when ambiguous. For example, on the "goals" page, "make 1 mil in 2 years" means create a goal.
+- Always try to create an operation. Only return empty operations if the command is truly nonsensical.
+- Today's date is provided in context as "today" if available. Use it to compute relative dates.
 """
 
 SUGGEST_ACTIVITY_SYSTEM_PROMPT = """You are an assistant that parses a plain-language activity title and extracts structured fields.
@@ -164,13 +167,16 @@ Output format:
   "value": "numeric or text value (e.g. '30')",
   "value_unit": "one of the allowed units or null",
   "category": "one of the allowed categories",
-  "goal_id": null
+  "goal_id": "uuid of matching goal from context, or null",
+  "task_id": "uuid of matching task from context, or null"
 }
 
 Rules:
 - "value_unit" must be one of: "minutes", "hours", "reps", "sets", "times", "km", "miles", "steps", "kg", "lbs", "pages", "calories" — or null
+- ALWAYS try to infer "value_unit" from the input. E.g. "workout" → "minutes", "run 5km" → "km", "read" → "pages"
 - "category" must be one of: "Exercise", "Study", "Work", "Other"
 - If "goal_id" can be inferred from context goals, set it; otherwise null
+- If "task_id" can be inferred from context tasks, set it; otherwise null
 - "value" must be a non-empty string
 - If you cannot parse a value, use "1"
 """

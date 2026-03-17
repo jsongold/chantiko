@@ -51,14 +51,29 @@ function formatOperationDetail(operation: Operation): string {
   if (operation.op === "delete") {
     return `Remove item ${operation.id ?? "unknown"}`
   }
-  if (operation.data) {
-    const title = operation.data.title
-    if (typeof title === "string") {
-      return title
-    }
-    return JSON.stringify(operation.data)
+  if (!operation.data) {
+    return operation.id ?? "unknown"
   }
-  return operation.id ?? "unknown"
+
+  const d = operation.data
+  const label = typeof d.title === "string" ? d.title
+    : typeof d.name === "string" ? d.name
+    : null
+
+  if (!label) {
+    return Object.entries(d)
+      .filter(([, v]) => v != null && v !== "")
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ")
+  }
+
+  const extras: string[] = []
+  if (d.target_value) extras.push(`target: ${d.target_value}`)
+  if (d.due_date) extras.push(`due: ${d.due_date}`)
+  if (d.value) extras.push(`${d.value}${d.value_unit ? ` ${d.value_unit}` : ""}`)
+  if (d.category && d.category !== "Other") extras.push(String(d.category))
+
+  return extras.length > 0 ? `${label} (${extras.join(", ")})` : label
 }
 
 export function AIPreviewModal({

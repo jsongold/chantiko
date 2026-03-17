@@ -46,23 +46,23 @@ export function ActivityCard({ activity, onDelete, onTap, goalName, taskName }: 
       }}
     >
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium truncate">
-            {activity.title}
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="text-sm font-medium truncate shrink-0 max-w-[40%]">
+            {activity.title || "Untitled"}
           </span>
           <Badge variant="secondary" className="shrink-0">
             {activity.category}
           </Badge>
           {goalName && (
-            <Badge variant="outline" className="shrink-0 gap-1">
-              <Target className="size-2.5" />
-              {goalName}
+            <Badge variant="outline" className="gap-1 truncate max-w-[8rem]">
+              <Target className="size-2.5 shrink-0" />
+              <span className="truncate">{goalName}</span>
             </Badge>
           )}
           {taskName && (
-            <Badge variant="outline" className="shrink-0 gap-1">
-              <ListChecks className="size-2.5" />
-              {taskName}
+            <Badge variant="outline" className="gap-1 truncate max-w-[8rem]">
+              <ListChecks className="size-2.5 shrink-0" />
+              <span className="truncate">{taskName}</span>
             </Badge>
           )}
         </div>

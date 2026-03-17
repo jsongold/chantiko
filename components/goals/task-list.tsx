@@ -13,7 +13,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { ChevronRightIcon } from "lucide-react"
-import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { EmptyState } from "@/components/shared/empty-state"
 import { features } from "@/lib/features"
@@ -184,7 +184,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
         )}
       </div>
 
-      <AddActivityFab
+      <ChikoFab
         onManualOpen={() => {
           setEditingTask(null)
           setSheetOpen(true)
@@ -233,6 +233,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
             },
           }}
           context={{
+            page: "tasks",
             goal_id: goalId,
             goal_name: goalName,
             tasks: tasks.map((t) => ({ id: t.id, name: t.name, status: t.status })),

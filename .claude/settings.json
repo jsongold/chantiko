@@ -11,5 +11,13 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Read(//Users/yasumasa_takemura/.claude/**)"
+    ]
   }
 }

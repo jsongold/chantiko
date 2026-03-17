@@ -4,7 +4,7 @@ import { useCallback, useState } from "react"
 import { api } from "@/lib/api"
 import type { AIEditResponse, Operation } from "@/types"
 
-const APP_LLM_MODEL = "gpt-4o-mini"
+const APP_LLM_MODEL = "gpt-4.1-nano"
 
 interface OperationHandlers {
   onCreate?: (data: Record<string, unknown>) => Promise<void>
