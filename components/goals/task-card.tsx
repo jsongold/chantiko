@@ -45,15 +45,14 @@ export function TaskCard({ task, onToggle, onTap, onDelete, goalName }: TaskCard
             {task.description}
           </span>
         )}
-<<<<<<< HEAD
         {task.due_date && (
           <span className="text-xs text-muted-foreground mt-0.5">
             {format(parseISO(task.due_date), "MMM d")}
-=======
+          </span>
+        )}
         {goalName && (
           <span className="text-xs text-muted-foreground/70 mt-0.5">
             {goalName}
->>>>>>> 6c44f9c (feat: add cross-goal tasks page with day grouping and navigation)
           </span>
         )}
       </p>
