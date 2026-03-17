@@ -10,7 +10,6 @@ import {
   type ActivityFormData,
 } from "@/components/activity/activity-input-sheet"
 import { AddActivityFab } from "@/components/activity/add-activity-fab"
-import { AIEditSection } from "@/components/ai/ai-edit-section"
 import { useActivities } from "@/hooks/useActivities"
 import { useGoalStore } from "@/store/goalStore"
 import { api } from "@/lib/api"
@@ -165,38 +164,8 @@ export function ActivityList() {
     }
   }, [])
 
-  const aiContextProvider = useCallback(
-    () => ({ activities: activities.slice(0, 20) }),
-    [activities]
-  )
-
-  const aiHandlers = useMemo(
-    () => ({
-      onCreate: async (data: Record<string, unknown>) => {
-        await createActivity({
-          title: String(data.title ?? ""),
-          value: String(data.value ?? ""),
-          value_unit: data.value_unit ? String(data.value_unit) : null,
-          category: String(data.category ?? "Other"),
-          goal_id: data.goal_id ? String(data.goal_id) : null,
-          task_id: data.task_id ? String(data.task_id) : null,
-        })
-      },
-      onDelete: async (id: string) => {
-        await deleteActivity(id)
-      },
-    }),
-    [createActivity, deleteActivity]
-  )
-
   return (
     <>
-      <AIEditSection
-        contextProvider={aiContextProvider}
-        endpoint="activity_edit"
-        handlers={aiHandlers}
-      />
-
       {!isLoading && activities.length === 0 ? (
         <EmptyState
           title="No activities yet"

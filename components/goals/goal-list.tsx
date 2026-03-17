@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useGoals } from "@/hooks/useGoals"
 import { GoalCard } from "@/components/goals/goal-card"
@@ -8,10 +8,9 @@ import {
   AddGoalSheet,
   type GoalFormData,
 } from "@/components/goals/add-goal-sheet"
-import { AIEditSection } from "@/components/ai/ai-edit-section"
 import { RouteButton } from "@/components/shared/route-button"
 import { EmptyState } from "@/components/shared/empty-state"
-import type { Goal, GoalWithCounts } from "@/types"
+import type { GoalWithCounts } from "@/types"
 
 export function GoalList() {
   const router = useRouter()
@@ -60,35 +59,8 @@ export function GoalList() {
     }
   }, [])
 
-  const aiContextProvider = useCallback(
-    () => ({ goals }),
-    [goals]
-  )
-
-  const aiHandlers = useMemo(
-    () => ({
-      onCreate: async (opData: Record<string, unknown>) => {
-        await createGoal(opData as { name: string; description?: string; due_date?: string | null; target_value?: string | null; status?: string })
-      },
-      onUpdate: async (id: string, opData: Record<string, unknown>) => {
-        await updateGoal(id, opData as Partial<GoalWithCounts>)
-      },
-      onDelete: async (id: string) => {
-        await deleteGoal(id)
-      },
-    }),
-    [createGoal, updateGoal, deleteGoal]
-  )
-
   return (
     <>
-      <AIEditSection
-        contextProvider={aiContextProvider}
-        endpoint="goal_edit"
-        handlers={aiHandlers}
-        placeholder="Ask AI to edit goals..."
-      />
-
       <div className="p-4 pb-20">
         <h2 className="text-lg font-semibold">Goals</h2>
         <p className="mb-4 text-sm text-muted-foreground">
