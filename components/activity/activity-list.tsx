@@ -256,25 +256,23 @@ export function ActivityList() {
           handlers={{
             onCreate: async (entity, data) => {
               if (entity === "activity") {
-                const normalized = {
+                const parsed = activityFormSchema.safeParse({
                   task_id: null,
                   goal_id: null,
-                  title: data.title ?? data.name ?? "",
                   ...data,
-                }
-                const parsed = activityFormSchema.safeParse(normalized)
+                  title: String(data.title || data.name || ""),
+                })
                 if (parsed.success) await createActivity(parsed.data)
               }
             },
             onUpdate: async (entity, id, data) => {
               if (entity === "activity") {
-                const normalized = {
+                const parsed = activityFormSchema.safeParse({
                   task_id: null,
                   goal_id: null,
-                  title: data.title ?? data.name ?? "",
                   ...data,
-                }
-                const parsed = activityFormSchema.safeParse(normalized)
+                  title: String(data.title || data.name || ""),
+                })
                 if (parsed.success) await updateActivity(id, parsed.data)
               }
             },
