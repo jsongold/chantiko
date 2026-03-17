@@ -1,10 +1,11 @@
 "use client"
 
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Plus, Bot, Zap, Pencil } from "lucide-react"
-import { Fab } from "@/components/shared/fab"
 import { Button } from "@/components/ui/button"
 import { useSettingsStore, type AIMode } from "@/store/settingsStore"
 import { features } from "@/lib/features"
+import { cn } from "@/lib/utils"
 
 interface AddActivityFabProps {
   onManualOpen: () => void
@@ -12,45 +13,113 @@ interface AddActivityFabProps {
   manualLabel?: string
 }
 
-const MODE_CYCLE: AIMode[] = ["manual", "ask", "auto"]
+const MODES: { mode: AIMode; icon: React.ElementType; label: string }[] = [
+  { mode: "manual", icon: Pencil, label: "Manual" },
+  { mode: "ask", icon: Bot, label: "Ask AI" },
+  { mode: "auto", icon: Zap, label: "Auto AI" },
+]
 
-const MODE_ICONS: Record<AIMode, React.ElementType> = {
-  manual: Pencil,
+const FAB_ICONS: Record<AIMode, React.ElementType> = {
+  manual: Plus,
   ask: Bot,
   auto: Zap,
 }
+
+const LONG_PRESS_MS = 600
 
 export function AddActivityFab({ onManualOpen, onAIOpen, manualLabel = "Add activity" }: AddActivityFabProps) {
   const aiMode = useSettingsStore((s) => s.aiMode)
   const setAIMode = useSettingsStore((s) => s.setAIMode)
   const isAIMode = features.aiChat && aiMode !== "manual"
 
-  const ModeIcon = MODE_ICONS[aiMode]
+  const [radialOpen, setRadialOpen] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const didLongPressRef = useRef(false)
 
-  const cycleMode = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const next = MODE_CYCLE[(MODE_CYCLE.indexOf(aiMode) + 1) % MODE_CYCLE.length]
-    setAIMode(next)
-  }
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  const handlePressStart = useCallback(() => {
+    if (!features.aiChat) return
+    didLongPressRef.current = false
+    timerRef.current = setTimeout(() => {
+      didLongPressRef.current = true
+      setRadialOpen(true)
+    }, LONG_PRESS_MS)
+  }, [])
+
+  const handlePressEnd = useCallback(() => {
+    clearTimer()
+    if (didLongPressRef.current) return
+    // Short tap — trigger normal action
+    if (isAIMode) {
+      onAIOpen()
+    } else {
+      onManualOpen()
+    }
+  }, [clearTimer, isAIMode, onAIOpen, onManualOpen])
+
+  const handleSelectMode = useCallback(
+    (mode: AIMode) => {
+      setAIMode(mode)
+      setRadialOpen(false)
+    },
+    [setAIMode]
+  )
+
+  // Close radial on outside tap
+  useEffect(() => {
+    if (!radialOpen) return
+    const close = () => setRadialOpen(false)
+    const timer = setTimeout(() => document.addEventListener("pointerdown", close), 0)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener("pointerdown", close)
+    }
+  }, [radialOpen])
+
+  const FabIcon = FAB_ICONS[aiMode]
 
   return (
-    <>
-      <Fab
-        onClick={isAIMode ? onAIOpen : onManualOpen}
-        icon={isAIMode ? Bot : Plus}
-        label={isAIMode ? "Open AI chat" : manualLabel}
-      />
-      {features.aiChat && (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={cycleMode}
-          aria-label={`AI mode: ${aiMode}`}
-          className="fixed bottom-[5.5rem] left-1/2 translate-x-5 z-40 size-7 rounded-full shadow-md p-0 bg-background"
+    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
+      {/* Radial mode options */}
+      {radialOpen && (
+        <div
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-3"
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <ModeIcon className="size-3.5" />
-        </Button>
+          {MODES.map(({ mode, icon: Icon, label }) => (
+            <Button
+              key={mode}
+              variant={mode === aiMode ? "default" : "outline"}
+              size="icon"
+              className="size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
+              aria-label={label}
+              onClick={() => handleSelectMode(mode)}
+            >
+              <Icon className="size-4" />
+            </Button>
+          ))}
+        </div>
       )}
-    </>
+
+      {/* Main FAB */}
+      <Button
+        size="icon-lg"
+        className="rounded-full size-12 shadow-md"
+        aria-label={isAIMode ? "Open AI chat" : manualLabel}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <FabIcon className="size-5" />
+      </Button>
+    </div>
   )
 }
