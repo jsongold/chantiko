@@ -19,7 +19,7 @@ export function TaskCard({ task, onToggle, onTap, onDelete, goalName }: TaskCard
   const isDone = task.status === "done"
 
   return (
-    <div className="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/50">
+    <div className="flex items-start gap-3 rounded-lg border bg-card p-3">
       <Checkbox
         checked={isDone}
         onCheckedChange={() => onToggle()}
