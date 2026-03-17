@@ -21,6 +21,19 @@ When creating PRs:
 4. Include test plan with TODOs
 5. Push with `-u` flag if new branch
 
+## Branch-First Rule (CRITICAL)
+
+ALWAYS checkout a new branch before writing or modifying any code. Never implement on `main` or the current branch directly.
+
+```bash
+git checkout -b <type>/<short-description>
+# e.g. git checkout -b feat/user-auth
+#      git checkout -b fix/login-redirect
+#      git checkout -b refactor/auth-middleware
+```
+
+Branch naming: `<type>/<short-description>` matching the commit type (feat, fix, refactor, etc.)
+
 ## Feature Implementation Workflow
 
 1. **Plan First**

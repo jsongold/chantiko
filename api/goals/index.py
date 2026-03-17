@@ -15,7 +15,11 @@ def _build_app():
     from api._lib.models import Goal, Task
     from api._lib.schemas import GoalCreate, GoalUpdate, error_response, success_response
 
+    from api._lib.logging import add_logging_middleware, configure_logging
+
+    configure_logging()
     app = FastAPI()
+    add_logging_middleware(app)
 
     def _get_goal_for_user(
         session: Session, goal_id: UUID, user_id: str
@@ -64,7 +68,7 @@ def _build_app():
 
             return success_response(data)
         except Exception:
-            logger.exception("Failed to fetch goals")
+            logger.exception("Failed to fetch goals", extra={"user_id": user_id[:8], "endpoint": "/api/goals"})
             return error_response("Failed to fetch goals", status_code=500)
 
     @app.post("/api/goals")
@@ -93,10 +97,11 @@ def _build_app():
             d["task_count"] = 0
             d["done_count"] = 0
 
+            logger.info("Goal created: %s", goal.id, extra={"user_id": user_id[:8], "endpoint": "/api/goals"})
             return success_response(d)
         except Exception:
             session.rollback()
-            logger.exception("Failed to create goal")
+            logger.exception("Failed to create goal", extra={"user_id": user_id[:8], "endpoint": "/api/goals"})
             return error_response("Failed to create goal", status_code=500)
 
     @app.get("/api/goals/{id}")
@@ -112,7 +117,7 @@ def _build_app():
 
             return success_response(goal.model_dump(mode="json"))
         except Exception:
-            logger.exception("Failed to fetch goal")
+            logger.exception("Failed to fetch goal", extra={"user_id": user_id[:8], "endpoint": f"/api/goals/{id}"})
             return error_response("Failed to fetch goal", status_code=500)
 
     @app.patch("/api/goals/{id}")
@@ -138,10 +143,11 @@ def _build_app():
             session.commit()
             session.refresh(goal)
 
+            logger.info("Goal updated: %s", id, extra={"user_id": user_id[:8], "endpoint": f"/api/goals/{id}"})
             return success_response(goal.model_dump(mode="json"))
         except Exception:
             session.rollback()
-            logger.exception("Failed to update goal")
+            logger.exception("Failed to update goal", extra={"user_id": user_id[:8], "endpoint": f"/api/goals/{id}"})
             return error_response("Failed to update goal", status_code=500)
 
     @app.delete("/api/goals/{id}")
@@ -173,10 +179,11 @@ def _build_app():
 
             session.commit()
 
+            logger.info("Goal deleted: %s", id, extra={"user_id": user_id[:8], "endpoint": f"/api/goals/{id}"})
             return success_response({"deleted": str(id)})
         except Exception:
             session.rollback()
-            logger.exception("Failed to delete goal")
+            logger.exception("Failed to delete goal", extra={"user_id": user_id[:8], "endpoint": f"/api/goals/{id}"})
             return error_response("Failed to delete goal", status_code=500)
 
     return app

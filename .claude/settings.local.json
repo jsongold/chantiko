@@ -6,7 +6,9 @@
       "Skill(commit)",
       "Bash(git branch:*)",
       "Bash(git worktree:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(find:*)",
+      "Bash(gh pr:*)"
     ]
   }
 }

@@ -37,7 +37,9 @@ export function useTasks(goalId: string) {
       })
 
       if (!response.success || !response.data) {
-        throw new Error(response.error ?? "Failed to create task")
+        const err = response.error ?? "Failed to create task"
+        console.error("[Tasks] create failed:", err)
+        throw new Error(err)
       }
 
       addTask(response.data)
@@ -51,7 +53,9 @@ export function useTasks(goalId: string) {
       const response = await api.patch<Task>(`/tasks/${id}`, data)
 
       if (!response.success || !response.data) {
-        throw new Error(response.error ?? "Failed to update task")
+        const err = response.error ?? "Failed to update task"
+        console.error("[Tasks] update failed:", err)
+        throw new Error(err)
       }
 
       updateTask(id, response.data)
@@ -65,7 +69,9 @@ export function useTasks(goalId: string) {
       const response = await api.delete(`/tasks/${id}`)
 
       if (!response.success) {
-        throw new Error(response.error ?? "Failed to delete task")
+        const err = response.error ?? "Failed to delete task"
+        console.error("[Tasks] delete failed:", err)
+        throw new Error(err)
       }
 
       removeTask(id)

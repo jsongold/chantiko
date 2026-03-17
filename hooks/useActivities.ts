@@ -66,7 +66,9 @@ export function useActivities() {
 
         if (!response.success || !response.data) {
           removeActivity(tempId)
-          throw new Error(response.error ?? "Failed to create activity")
+          const err = response.error ?? "Failed to create activity"
+          console.error("[Activities] create failed:", err)
+          throw new Error(err)
         }
 
         removeActivity(tempId)
@@ -85,7 +87,9 @@ export function useActivities() {
       const response = await api.patch<Activity>(`/activities/${id}`, data)
 
       if (!response.success || !response.data) {
-        throw new Error(response.error ?? "Failed to update activity")
+        const err = response.error ?? "Failed to update activity"
+        console.error("[Activities] update failed:", err)
+        throw new Error(err)
       }
 
       useActivityStore.getState().updateActivity(id, response.data)
@@ -106,7 +110,9 @@ export function useActivities() {
           if (existing) {
             addActivity(existing)
           }
-          throw new Error(response.error ?? "Failed to delete activity")
+          const err = response.error ?? "Failed to delete activity"
+          console.error("[Activities] delete failed:", err)
+          throw new Error(err)
         }
       } catch (error) {
         if (existing) {
@@ -122,7 +128,9 @@ export function useActivities() {
     const response = await api.get<string[]>("/activities/history")
 
     if (!response.success || !response.data) {
-      throw new Error(response.error ?? "Failed to fetch history")
+      const err = response.error ?? "Failed to fetch history"
+      console.error("[Activities] history failed:", err)
+      throw new Error(err)
     }
 
     return response.data
