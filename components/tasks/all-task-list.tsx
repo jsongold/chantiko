@@ -9,8 +9,10 @@ import {
   type TaskFormData,
 } from "@/components/goals/add-task-sheet"
 import { AlertDialog } from "@/components/ui/alert-dialog"
-import { RouteButton } from "@/components/shared/route-button"
+import { ChikoFab } from "@/components/shared/chiko-fab"
+import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { EmptyState } from "@/components/shared/empty-state"
+import { features } from "@/lib/features"
 import { api } from "@/lib/api"
 import type { Task, GoalWithCounts } from "@/types"
 
@@ -64,6 +66,7 @@ export function AllTaskList() {
     useAllTasks()
   const [goals, setGoals] = useState<GoalWithCounts[]>([])
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [aiChatOpen, setAIChatOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null)
@@ -186,12 +189,13 @@ export function AllTaskList() {
         )}
       </div>
 
-      <RouteButton
-        onClick={() => {
+      <ChikoFab
+        onManualOpen={() => {
           setEditingTask(null)
           setSheetOpen(true)
         }}
-        aria-label="Add task"
+        onAIOpen={() => setAIChatOpen(true)}
+        manualLabel="Add task"
       />
 
       <AddTaskSheet
@@ -217,6 +221,47 @@ export function AllTaskList() {
           }
         }}
       />
+
+      {features.aiChat && (
+        <AIChatSheet
+          open={aiChatOpen}
+          onOpenChange={setAIChatOpen}
+          handlers={{
+            onCreate: async (entity, data) => {
+              if (entity === "task") {
+                const goalId = goals[0]?.id
+                if (!goalId) return
+                await createTask({
+                  goal_id: goalId,
+                  name: String(data.name ?? ""),
+                  description: data.description != null ? String(data.description) : undefined,
+                  label: data.label != null ? String(data.label) : undefined,
+                  due_date: data.due_date != null ? String(data.due_date) : undefined,
+                  status: "active",
+                })
+              }
+            },
+            onUpdate: async (entity, id, data) => {
+              if (entity === "task") {
+                await updateTask(id, {
+                  name: data.name != null ? String(data.name) : undefined,
+                  description: data.description != null ? String(data.description) : undefined,
+                  label: data.label != null ? String(data.label) : undefined,
+                })
+              }
+            },
+            onDelete: async (entity, id) => {
+              if (entity === "task") {
+                await deleteTask(id)
+              }
+            },
+          }}
+          context={{
+            goals: goals.map((g) => ({ id: g.id, name: g.name })),
+            tasks: tasks.slice(0, 10).map((t) => ({ id: t.id, name: t.name, status: t.status })),
+          }}
+        />
+      )}
     </>
   )
 }
