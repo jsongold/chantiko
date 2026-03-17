@@ -6,7 +6,7 @@ import { useSettingsStore } from "@/store/settingsStore"
 import { useAIStore, type ChatMessage } from "@/store/aiStore"
 import type { AIEditResponse, Operation } from "@/types"
 
-const APP_LLM_MODEL = "gpt-4o-mini"
+const APP_LLM_MODEL = "gpt-4.1-nano"
 
 interface OperationHandlers {
   onCreate?: (entity: string, data: Record<string, unknown>) => Promise<void>

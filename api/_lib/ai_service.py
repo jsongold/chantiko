@@ -10,7 +10,7 @@ from openai import OpenAI
 ALLOWED_MODELS = {
     "claude-haiku-4-5-20251001",
     "claude-sonnet-4-5-20250514",
-    "gpt-4o-mini",
+    "gpt-4.1-nano",
     "gpt-4o",
 }
 
@@ -19,7 +19,7 @@ ANTHROPIC_MODELS = {
     "claude-sonnet-4-5-20250514",
 }
 
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-4.1-nano"
 
 ACTIVITY_SYSTEM_PROMPT = """You are an assistant that converts natural language commands into structured JSON operations on a user's activity list.
 
