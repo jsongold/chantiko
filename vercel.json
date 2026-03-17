@@ -1,3 +1,10 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "rewrites": [
+    { "source": "/api/activities/history", "destination": "/api/activities" },
+    { "source": "/api/activities/:id", "destination": "/api/activities" },
+    { "source": "/api/goals/:id", "destination": "/api/goals" },
+    { "source": "/api/tasks/:id", "destination": "/api/tasks" },
+    { "source": "/api/ai/:path*", "destination": "/api/ai" }
+  ]
 }
