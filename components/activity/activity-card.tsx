@@ -86,7 +86,7 @@ export function ActivityCard({ activity, onDelete, onTap, goalName, taskName }: 
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={() => onDelete(activity.id)}
+          onClick={(e) => { e.stopPropagation(); onDelete(activity.id) }}
           aria-label={`Delete ${activity.title}`}
         >
           <Trash2 className="size-3.5 text-muted-foreground" />
