@@ -50,7 +50,7 @@ function groupByLabel(tasks: Task[]): LabelGroup[] {
 }
 
 export function TaskList({ goalId, goalName }: TaskListProps) {
-  const { tasks, isLoading, fetchTasks, createTask, updateTask, deleteTask } =
+  const { tasks, isLoading, hasMore, fetchTasks, fetchMoreTasks, createTask, updateTask, deleteTask } =
     useTasks(goalId)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -168,6 +168,16 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
               )
             })}
           </div>
+        )}
+
+        {hasMore && tasks.length > 0 && (
+          <button
+            onClick={fetchMoreTasks}
+            disabled={isLoading}
+            className="mt-4 w-full py-2 text-sm text-muted-foreground disabled:opacity-50"
+          >
+            {isLoading ? "Loading..." : "See more"}
+          </button>
         )}
       </div>
 

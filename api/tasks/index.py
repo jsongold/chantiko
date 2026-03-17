@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from typing import Optional
 from uuid import UUID
 
 
@@ -8,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def _build_app():
     from fastapi import Depends, FastAPI, Path, Query
-    from sqlmodel import Session, select
+    from sqlmodel import Session, col, select
 
     from api._lib.auth import CurrentUserId
     from api._lib.db import get_session
@@ -33,6 +34,9 @@ def _build_app():
         user_id: CurrentUserId,
         goal_id: str | None = Query(None),
         session: Session = Depends(get_session),
+        limit: int = Query(default=10, ge=1, le=50),
+        cursor_created_at: Optional[str] = Query(default=None),
+        cursor_id: Optional[str] = Query(default=None),
     ):
         try:
             uid = UUID(user_id)
@@ -43,14 +47,36 @@ def _build_app():
                 .where(Task.is_deleted == False)  # noqa: E712
             )
             if goal_id:
-                stmt = stmt.where(Task.goal_id == UUID(goal_id)).order_by(Task.created_at)
+                stmt = (
+                    stmt.where(Task.goal_id == UUID(goal_id))
+                    .order_by(col(Task.created_at).asc(), col(Task.id).asc())
+                    .limit(limit)
+                )
+
+                if cursor_created_at and cursor_id:
+                    cursor_ts = datetime.fromisoformat(cursor_created_at)
+                    stmt = stmt.where(
+                        (col(Task.created_at) > cursor_ts)
+                        | (
+                            (col(Task.created_at) == cursor_ts)
+                            & (col(Task.id) > UUID(cursor_id))
+                        )
+                    )
             else:
                 stmt = stmt.order_by(Task.due_date.desc().nulls_last(), Task.created_at.desc())
 
             tasks = session.exec(stmt).all()
             data = [task.model_dump(mode="json") for task in tasks]
 
-            return success_response(data)
+            next_cursor = None
+            if goal_id and len(tasks) == limit:
+                last = tasks[-1]
+                next_cursor = {
+                    "cursor_created_at": last.created_at.isoformat(),
+                    "cursor_id": str(last.id),
+                }
+
+            return success_response(data, meta={"limit": limit, "next_cursor": next_cursor})
         except Exception:
             logger.exception("Failed to fetch tasks")
             return error_response("Failed to fetch tasks", status_code=500)

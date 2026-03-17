@@ -9,25 +9,53 @@ export function useTasks(goalId: string) {
   const {
     tasks,
     isLoading,
-    setTasks,
+    hasMore,
     addTask,
     updateTask,
     removeTask,
+    appendTasks,
     setLoading,
+    reset,
   } = useTaskStore()
 
   const fetchTasks = useCallback(async () => {
+    reset()
     setLoading(true)
     try {
       const response = await api.get<Task[]>(`/tasks?goal_id=${goalId}`)
 
       if (response.success && response.data) {
-        setTasks(response.data)
+        const nextCursor = response.meta?.next_cursor as { cursor_created_at: string; cursor_id: string } | null | undefined
+        const hasMoreItems = nextCursor !== null && nextCursor !== undefined
+        const cursorStr = nextCursor ? `cursor_created_at=${nextCursor.cursor_created_at}&cursor_id=${nextCursor.cursor_id}` : null
+        useTaskStore.setState({
+          tasks: response.data,
+          hasMore: hasMoreItems,
+          cursor: cursorStr,
+        })
       }
     } finally {
       setLoading(false)
     }
-  }, [goalId, setLoading, setTasks])
+  }, [goalId, reset, setLoading])
+
+  const fetchMoreTasks = useCallback(async () => {
+    const currentCursor = useTaskStore.getState().cursor
+    if (!currentCursor) return
+    setLoading(true)
+    try {
+      const response = await api.get<Task[]>(`/tasks?goal_id=${goalId}&${currentCursor}`)
+
+      if (response.success && response.data) {
+        const nextCursor = response.meta?.next_cursor as { cursor_created_at: string; cursor_id: string } | null | undefined
+        const hasMoreItems = nextCursor !== null && nextCursor !== undefined
+        const cursorStr = nextCursor ? `cursor_created_at=${nextCursor.cursor_created_at}&cursor_id=${nextCursor.cursor_id}` : null
+        appendTasks(response.data, hasMoreItems, cursorStr)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [goalId, appendTasks, setLoading])
 
   const createTask = useCallback(
     async (data: { name: string; description?: string; label?: string | null; due_date?: string | null; status?: string }) => {
@@ -82,7 +110,9 @@ export function useTasks(goalId: string) {
   return {
     tasks,
     isLoading,
+    hasMore,
     fetchTasks,
+    fetchMoreTasks,
     createTask,
     updateTask: handleUpdateTask,
     deleteTask,

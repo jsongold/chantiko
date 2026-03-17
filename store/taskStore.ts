@@ -4,6 +4,8 @@ import type { Task } from "@/types"
 interface TaskState {
   tasks: Task[]
   isLoading: boolean
+  hasMore: boolean
+  cursor: string | null
 }
 
 interface TaskActions {
@@ -11,6 +13,7 @@ interface TaskActions {
   addTask: (task: Task) => void
   updateTask: (id: string, updates: Partial<Task>) => void
   removeTask: (id: string) => void
+  appendTasks: (tasks: Task[], hasMore: boolean, cursor: string | null) => void
   setLoading: (isLoading: boolean) => void
   reset: () => void
 }
@@ -18,6 +21,8 @@ interface TaskActions {
 const initialState: TaskState = {
   tasks: [],
   isLoading: false,
+  hasMore: true,
+  cursor: null,
 }
 
 export const useTaskStore = create<TaskState & TaskActions>((set) => ({
@@ -40,6 +45,13 @@ export const useTaskStore = create<TaskState & TaskActions>((set) => ({
   removeTask: (id) =>
     set((state) => ({
       tasks: state.tasks.filter((t) => t.id !== id),
+    })),
+
+  appendTasks: (tasks, hasMore, cursor) =>
+    set((state) => ({
+      tasks: [...state.tasks, ...tasks],
+      hasMore,
+      cursor,
     })),
 
   setLoading: (isLoading) => set({ isLoading }),
