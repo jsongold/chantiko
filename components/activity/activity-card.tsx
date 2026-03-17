@@ -48,7 +48,7 @@ export function ActivityCard({ activity, onDelete, onTap, goalName, taskName }: 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium truncate">
-            {activity.title}
+            {activity.title || "Untitled"}
           </span>
           <Badge variant="secondary" className="shrink-0">
             {activity.category}
