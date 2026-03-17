@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
-from mangum import Mangum
 
 logger = logging.getLogger(__name__)
 
@@ -183,4 +182,5 @@ def _build_app():
     return app
 
 
-handler = Mangum(_build_app(), lifespan="off")
+
+app = _build_app()
