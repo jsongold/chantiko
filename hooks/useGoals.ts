@@ -30,14 +30,7 @@ export function useGoals() {
   }, [setLoading, setGoals])
 
   const createGoal = useCallback(
-    async (data: {
-      name: string
-      description?: string
-      target_value?: string | null
-      current_value?: string | null
-      due_date?: string | null
-      status?: string
-    }) => {
+    async (data: { name: string; description?: string; due_date?: string | null; target_value?: string | null; status?: string }) => {
       const response = await api.post<GoalWithCounts>("/goals", data)
 
       if (!response.success || !response.data) {

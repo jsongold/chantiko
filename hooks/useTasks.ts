@@ -3,10 +3,9 @@
 import { useCallback } from "react"
 import { api } from "@/lib/api"
 import { useTaskStore } from "@/store/taskStore"
-import { useGoalStore } from "@/store/goalStore"
 import type { Task } from "@/types"
 
-export function useTasks() {
+export function useTasks(goalId: string) {
   const {
     tasks,
     isLoading,
@@ -16,45 +15,35 @@ export function useTasks() {
     removeTask,
     setLoading,
   } = useTaskStore()
-  const { updateGoal } = useGoalStore()
 
-  const fetchTasks = useCallback(
-    async (goalId: string) => {
-      setLoading(true)
-      try {
-        const response = await api.get<Task[]>(`/tasks?goal_id=${goalId}`)
+  const fetchTasks = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await api.get<Task[]>(`/tasks?goal_id=${goalId}`)
 
-        if (response.success && response.data) {
-          setTasks(response.data)
-        }
-      } finally {
-        setLoading(false)
+      if (response.success && response.data) {
+        setTasks(response.data)
       }
-    },
-    [setLoading, setTasks]
-  )
+    } finally {
+      setLoading(false)
+    }
+  }, [goalId, setLoading, setTasks])
 
   const createTask = useCallback(
-    async (data: {
-      goal_id: string
-      name: string
-      label?: string | null
-      description?: string
-      target_value?: string | null
-      current_value?: string | null
-      status?: string
-    }) => {
-      const response = await api.post<Task>("/tasks", data)
+    async (data: { name: string; description?: string; label?: string | null; status?: string }) => {
+      const response = await api.post<Task>("/tasks", {
+        ...data,
+        goal_id: goalId,
+      })
 
       if (!response.success || !response.data) {
         throw new Error(response.error ?? "Failed to create task")
       }
 
       addTask(response.data)
-      updateGoal(data.goal_id, {})
       return response.data
     },
-    [addTask, updateGoal]
+    [goalId, addTask]
   )
 
   const handleUpdateTask = useCallback(

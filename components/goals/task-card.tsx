@@ -3,53 +3,51 @@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Trash2Icon } from "lucide-react"
-import type { Task } from "@/types"
 import { cn } from "@/lib/utils"
+import type { Task } from "@/types"
 
 interface TaskCardProps {
   task: Task
-  onToggle: (id: string, done: boolean) => void
-  onDelete: (id: string) => void
-  onEdit: (task: Task) => void
+  onToggle: () => void
+  onTap: () => void
+  onDelete: () => void
 }
 
-export function TaskCard({ task, onToggle, onDelete, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onToggle, onTap, onDelete }: TaskCardProps) {
   const isDone = task.status === "done"
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-card px-3 py-2.5">
+    <div className="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/50">
       <Checkbox
         checked={isDone}
-        onCheckedChange={(checked) => {
-          onToggle(task.id, Boolean(checked))
-        }}
+        onCheckedChange={() => onToggle()}
         className="mt-0.5"
       />
-      <div
+      <p
         className={cn(
-          "flex-1 min-w-0 cursor-pointer active:opacity-70",
+          "flex-1 min-w-0 text-sm leading-snug cursor-pointer active:opacity-70",
           isDone && "line-through text-muted-foreground"
         )}
-        onClick={() => onEdit(task)}
+        onClick={onTap}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            onEdit(task)
+            onTap()
           }
         }}
       >
-        <p className="text-sm leading-snug">{task.name}</p>
-        {task.description ? (
-          <p className="mt-0.5 text-xs text-muted-foreground truncate">
+        {task.name}
+        {task.description && (
+          <span className="block text-xs text-muted-foreground truncate mt-0.5">
             {task.description}
-          </p>
-        ) : null}
-      </div>
+          </span>
+        )}
+      </p>
       <Button
         variant="ghost"
         size="icon-sm"
-        onClick={() => onDelete(task.id)}
+        onClick={onDelete}
         aria-label={`Delete task ${task.name}`}
       >
         <Trash2Icon className="size-3.5 text-muted-foreground" />
