@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
+import { Sparkles, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -34,13 +35,14 @@ import { VALUE_UNITS, ACTIVITY_CATEGORIES } from "@/types"
 import type { Activity } from "@/types"
 import { api } from "@/lib/api"
 import type { Task } from "@/types"
+import { features } from "@/lib/features"
 
 export interface GoalOption {
   id: string
   name: string
 }
 
-const activityFormSchema = z.object({
+export const activityFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   value: z.string().min(1, "Value is required").max(100),
   value_unit: z.string().nullable(),
@@ -73,6 +75,16 @@ export function ActivityInputSheet({
   const [titleSearch, setTitleSearch] = useState("")
   const [tasks, setTasks] = useState<Task[]>([])
   const prevGoalIdRef = useRef<string | null | undefined>(undefined)
+  const [aiSuggestion, setAISuggestion] = useState<{
+    title: string
+    value: string
+    value_unit: string | null
+    category: string
+    goal_id: string | null
+  } | null>(null)
+  const [suggestionLoading, setSuggestionLoading] = useState(false)
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const {
     register,
@@ -146,12 +158,52 @@ export function ActivityInputSheet({
     }).catch(() => {})
   }, [selectedGoalId, open, setValue])
 
+  // Debounced AI suggestion on title input (new activity mode only)
+  useEffect(() => {
+    if (!features.aiChat || isEditMode) return
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+
+    const trimmed = titleSearch.trim()
+    if (trimmed.length < 3 || suggestionDismissed) {
+      setAISuggestion(null)
+      return
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setSuggestionLoading(true)
+      api
+        .post<{
+          title: string
+          value: string
+          value_unit: string | null
+          category: string
+          goal_id: string | null
+        }>("/ai/suggest-activity", {
+          title_input: trimmed,
+          context: { goals: goals.map((g) => ({ id: g.id, name: g.name })) },
+        })
+        .then((res) => {
+          if (res.success && res.data) {
+            setAISuggestion(res.data)
+          }
+        })
+        .catch(() => {})
+        .finally(() => setSuggestionLoading(false))
+    }, 1000)
+
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    }
+  }, [titleSearch, isEditMode, suggestionDismissed, goals])
+
   const handleFormSubmit = useCallback(
     (data: ActivityFormData) => {
       onSubmit(data)
       reset()
       setTitleSearch("")
       setShowSuggestions(false)
+      setAISuggestion(null)
+      setSuggestionDismissed(false)
       onOpenChange(false)
     },
     [onSubmit, reset, onOpenChange]
@@ -172,6 +224,8 @@ export function ActivityInputSheet({
         reset()
         setTitleSearch("")
         setShowSuggestions(false)
+        setAISuggestion(null)
+        setSuggestionDismissed(false)
       }
       onOpenChange(nextOpen)
     },
@@ -203,6 +257,7 @@ export function ActivityInputSheet({
                     setTitleSearch(value)
                     setValue("title", value, { shouldValidate: true })
                     setShowSuggestions(value.length > 0)
+                    setSuggestionDismissed(false)
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => {
@@ -233,6 +288,86 @@ export function ActivityInputSheet({
               )}
             </div>
           </div>
+
+          {/* AI suggestion card */}
+          {features.aiChat && !isEditMode && (
+            <>
+              {!suggestionLoading && !aiSuggestion && !suggestionDismissed && titleSearch.trim().length >= 3 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Sparkles className="size-3 animate-pulse" />
+                  AI thinking…
+                </div>
+              )}
+              {suggestionLoading && (
+                <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Generating suggestion…
+                </div>
+              )}
+              {aiSuggestion && !suggestionLoading && (
+                <div className="flex flex-col gap-2 rounded-lg border bg-muted/50 px-3 py-2">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <Sparkles className="size-3.5" />
+                    AI suggests
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {aiSuggestion.value && (
+                      <span className="rounded bg-background px-1.5 py-0.5 border">
+                        Value: {aiSuggestion.value}
+                      </span>
+                    )}
+                    {aiSuggestion.value_unit && (
+                      <span className="rounded bg-background px-1.5 py-0.5 border">
+                        Unit: {aiSuggestion.value_unit}
+                      </span>
+                    )}
+                    {aiSuggestion.category && (
+                      <span className="rounded bg-background px-1.5 py-0.5 border">
+                        Category: {aiSuggestion.category}
+                      </span>
+                    )}
+                    {aiSuggestion.goal_id &&
+                      goals.find((g) => g.id === aiSuggestion.goal_id) && (
+                        <span className="rounded bg-background px-1.5 py-0.5 border">
+                          Goal:{" "}
+                          {goals.find((g) => g.id === aiSuggestion.goal_id)?.name}
+                        </span>
+                      )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        const s = aiSuggestion
+                        if (s.value) setValue("value", s.value, { shouldValidate: true })
+                        if (s.value_unit) setValue("value_unit", s.value_unit)
+                        if (s.category) setValue("category", s.category, { shouldValidate: true })
+                        if (s.goal_id) setValue("goal_id", s.goal_id)
+                        setAISuggestion(null)
+                      }}
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setAISuggestion(null)
+                        setSuggestionDismissed(true)
+                      }}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="flex gap-3">
             <div className="flex flex-col gap-1.5 flex-1">

@@ -10,24 +10,30 @@ export const LLM_MODELS = [
 
 export type LLMModel = (typeof LLM_MODELS)[number]["value"]
 
+export type AIMode = "auto" | "ask" | "manual"
+
 interface SettingsState {
   aiEnabled: boolean
   llmModel: LLMModel
+  aiMode: AIMode
 }
 
 interface SettingsActions {
   setAIEnabled: (enabled: boolean) => void
   setLLMModel: (model: LLMModel) => void
+  setAIMode: (mode: AIMode) => void
 }
 
 export const useSettingsStore = create<SettingsState & SettingsActions>()(
   persist(
     (set) => ({
       aiEnabled: true,
-      llmModel: "claude-haiku-4-5-20251001",
+      llmModel: "gpt-4o-mini",
+      aiMode: "ask" as AIMode,
 
       setAIEnabled: (enabled) => set({ aiEnabled: enabled }),
       setLLMModel: (model) => set({ llmModel: model }),
+      setAIMode: (mode) => set({ aiMode: mode }),
     }),
     {
       name: "chantiko-settings",

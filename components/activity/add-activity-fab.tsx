@@ -1,12 +1,24 @@
 "use client"
 
-import { Plus } from "lucide-react"
+import { Plus, Bot } from "lucide-react"
 import { Fab } from "@/components/shared/fab"
+import { useSettingsStore } from "@/store/settingsStore"
+import { features } from "@/lib/features"
 
 interface AddActivityFabProps {
-  onClick: () => void
+  onManualOpen: () => void
+  onAIOpen: () => void
 }
 
-export function AddActivityFab({ onClick }: AddActivityFabProps) {
-  return <Fab onClick={onClick} icon={Plus} label="Add activity" />
+export function AddActivityFab({ onManualOpen, onAIOpen }: AddActivityFabProps) {
+  const aiMode = useSettingsStore((s) => s.aiMode)
+  const isAIMode = features.aiChat && aiMode !== "manual"
+
+  return (
+    <Fab
+      onClick={isAIMode ? onAIOpen : onManualOpen}
+      icon={isAIMode ? Bot : Plus}
+      label={isAIMode ? "Open AI chat" : "Add activity"}
+    />
+  )
 }

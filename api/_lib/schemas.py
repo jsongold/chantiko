@@ -108,6 +108,24 @@ class AIEditRequest(BaseModel):
     model: Optional[str] = None
 
 
+class HistoryItem(BaseModel):
+    role: str = Field(..., pattern="^(user|assistant)$")
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
+class AIChatRequest(BaseModel):
+    command: str = Field(..., min_length=1, max_length=2000)
+    history: list[HistoryItem] = Field(default_factory=list, max_length=10)
+    context: dict = Field(default_factory=dict, max_length=20)
+    model: Optional[str] = None
+
+
+class ActivitySuggestRequest(BaseModel):
+    title_input: str = Field(..., min_length=1, max_length=200)
+    context: dict = Field(default_factory=dict, max_length=20)
+    model: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Response helpers
 # ---------------------------------------------------------------------------
