@@ -60,6 +60,7 @@ export interface Task {
   description: string
   target_value: string | null
   current_value: string | null
+  due_date: string | null
   status: "active" | "done" | "archived"
   is_deleted: boolean
   created_at: string

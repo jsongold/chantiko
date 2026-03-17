@@ -72,6 +72,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
         name: data.name,
         description: data.description,
         label: data.label,
+        due_date: data.due_date,
         status: "active",
       })
     },

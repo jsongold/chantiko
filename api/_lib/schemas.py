@@ -84,6 +84,7 @@ class TaskCreate(BaseModel):
     description: str = Field("", max_length=500)
     target_value: Optional[str] = Field(None, max_length=100)
     current_value: Optional[str] = Field(None, max_length=100)
+    due_date: Optional[str] = None
     status: Literal["active", "done"] = "active"
 
 
@@ -93,6 +94,7 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=500)
     target_value: Optional[str] = Field(None, max_length=100)
     current_value: Optional[str] = Field(None, max_length=100)
+    due_date: Optional[str] = None
     status: Optional[Literal["active", "done", "archived"]] = None
 
 
