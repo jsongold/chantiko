@@ -17,11 +17,7 @@ def _build_app():
     from api._lib.models import Activity
     from api._lib.schemas import ActivityCreate, ActivityUpdate, error_response, success_response
 
-    from api._lib.logging import add_logging_middleware, configure_logging
-
-    configure_logging()
     app = FastAPI()
-    add_logging_middleware(app)
 
     def _get_activity_for_user(
         session: Session, activity_id: UUID, user_id: str
@@ -74,7 +70,7 @@ def _build_app():
 
             return success_response(data, meta={"limit": limit, "next_cursor": next_cursor})
         except Exception:
-            logger.exception("Failed to fetch activities", extra={"user_id": user_id[:8], "endpoint": "/api/activities"})
+            logger.exception("Failed to fetch activities")
             return error_response("Failed to fetch activities", status_code=500)
 
     @app.post("/api/activities")
@@ -97,11 +93,10 @@ def _build_app():
             session.commit()
             session.refresh(activity)
 
-            logger.info("Activity created: %s", activity.id, extra={"user_id": user_id[:8], "endpoint": "/api/activities"})
             return success_response(activity.model_dump(mode="json"))
         except Exception:
             session.rollback()
-            logger.exception("Failed to create activity", extra={"user_id": user_id[:8], "endpoint": "/api/activities"})
+            logger.exception("Failed to create activity")
             return error_response("Failed to create activity", status_code=500)
 
     @app.get("/api/activities/history")
@@ -125,7 +120,7 @@ def _build_app():
 
             return success_response(titles)
         except Exception:
-            logger.exception("Failed to fetch activity history", extra={"user_id": user_id[:8], "endpoint": "/api/activities/history"})
+            logger.exception("Failed to fetch activity history")
             return error_response("Failed to fetch history", status_code=500)
 
     @app.patch("/api/activities/{id}")
@@ -154,11 +149,10 @@ def _build_app():
             session.commit()
             session.refresh(activity)
 
-            logger.info("Activity updated: %s", id, extra={"user_id": user_id[:8], "endpoint": f"/api/activities/{id}"})
             return success_response(activity.model_dump(mode="json"))
         except Exception:
             session.rollback()
-            logger.exception("Failed to update activity", extra={"user_id": user_id[:8], "endpoint": f"/api/activities/{id}"})
+            logger.exception("Failed to update activity")
             return error_response("Failed to update activity", status_code=500)
 
     @app.delete("/api/activities/{id}")
@@ -178,11 +172,10 @@ def _build_app():
             session.add(activity)
             session.commit()
 
-            logger.info("Activity deleted: %s", id, extra={"user_id": user_id[:8], "endpoint": f"/api/activities/{id}"})
             return success_response({"deleted": str(id)})
         except Exception:
             session.rollback()
-            logger.exception("Failed to delete activity", extra={"user_id": user_id[:8], "endpoint": f"/api/activities/{id}"})
+            logger.exception("Failed to delete activity")
             return error_response("Failed to delete activity", status_code=500)
 
     return app

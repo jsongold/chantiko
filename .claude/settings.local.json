@@ -8,7 +8,12 @@
       "Bash(git worktree:*)",
       "Bash(git stash:*)",
       "Bash(find:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=true git rebase --continue 2>&1)",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   }
 }
