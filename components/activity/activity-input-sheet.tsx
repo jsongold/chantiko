@@ -443,7 +443,9 @@ export function ActivityInputSheet({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="No goal" />
+                  <span className="truncate">
+                    {goals.find((g) => g.id === watch("goal_id"))?.name ?? "No goal"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">No goal</SelectItem>
@@ -467,7 +469,9 @@ export function ActivityInputSheet({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="No task" />
+                  <span className="truncate">
+                    {tasks.find((t) => t.id === watch("task_id"))?.name ?? "No task"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">No task</SelectItem>
