@@ -11,9 +11,9 @@ import {
 } from "@/components/activity/activity-input-sheet"
 import { AddActivityFab } from "@/components/activity/add-activity-fab"
 import { useActivities } from "@/hooks/useActivities"
-import { useGoalStore } from "@/store/goalStore"
+import { AlertDialog } from "@/components/ui/alert-dialog"
 import { api } from "@/lib/api"
-import type { Activity, GoalWithCounts } from "@/types"
+import type { Activity, GoalWithCounts, Task } from "@/types"
 
 function formatDateLabel(dateString: string): string {
   const date = parseISO(dateString)
@@ -71,8 +71,10 @@ export function ActivityList() {
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null)
   const [historyTitles, setHistoryTitles] = useState<string[]>([])
   const [goals, setGoals] = useState<GoalWithCounts[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -93,11 +95,21 @@ export function ActivityList() {
         setGoals(res.data)
       }
     }).catch(() => {})
+    api.get<Task[]>("/tasks").then((res) => {
+      if (res.success && res.data) {
+        setTasks(res.data)
+      }
+    }).catch(() => {})
   }, [])
 
   const goalMap = useMemo(
     () => new Map(goals.map((g) => [g.id, g.name])),
     [goals]
+  )
+
+  const taskMap = useMemo(
+    () => new Map(tasks.map((t) => [t.id, t.name])),
+    [tasks]
   )
 
   const handleIntersection = useCallback(
@@ -182,9 +194,10 @@ export function ActivityList() {
                 <ActivityCard
                   key={activity.id}
                   activity={activity}
-                  onDelete={deleteActivity}
+                  onDelete={(id) => setDeletingActivityId(id)}
                   onTap={handleTapActivity}
                   goalName={activity.goal_id ? goalMap.get(activity.goal_id) ?? null : null}
+                  taskName={activity.task_id ? taskMap.get(activity.task_id) ?? null : null}
                 />
               ))}
             </div>
@@ -212,6 +225,21 @@ export function ActivityList() {
         historyTitles={historyTitles}
         activity={editingActivity}
         goals={goals.map((g) => ({ id: g.id, name: g.name }))}
+      />
+
+      <AlertDialog
+        open={deletingActivityId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingActivityId(null)
+        }}
+        title="Delete activity?"
+        description="This action cannot be undone."
+        onConfirm={() => {
+          if (deletingActivityId) {
+            deleteActivity(deletingActivityId)
+            setDeletingActivityId(null)
+          }
+        }}
       />
     </>
   )

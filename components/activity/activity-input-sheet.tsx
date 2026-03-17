@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/select"
 import { VALUE_UNITS, ACTIVITY_CATEGORIES } from "@/types"
 import type { Activity } from "@/types"
+import { api } from "@/lib/api"
+import type { Task } from "@/types"
 
 export interface GoalOption {
   id: string
@@ -69,6 +71,8 @@ export function ActivityInputSheet({
   const isEditMode = activity !== null && activity !== undefined
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [titleSearch, setTitleSearch] = useState("")
+  const [tasks, setTasks] = useState<Task[]>([])
+  const prevGoalIdRef = useRef<string | null | undefined>(undefined)
 
   const {
     register,
@@ -115,6 +119,32 @@ export function ActivityInputSheet({
 
   const selectedUnit = watch("value_unit")
   const selectedCategory = watch("category")
+  const selectedGoalId = watch("goal_id")
+
+  useEffect(() => {
+    if (!open) {
+      setTasks([])
+      prevGoalIdRef.current = undefined
+      return
+    }
+    if (selectedGoalId === prevGoalIdRef.current) return
+    const prev = prevGoalIdRef.current
+    prevGoalIdRef.current = selectedGoalId
+
+    if (!selectedGoalId) {
+      setTasks([])
+      return
+    }
+    // Reset task when goal changes (not on initial load)
+    if (prev !== undefined) {
+      setValue("task_id", null)
+    }
+    api.get<Task[]>(`/tasks?goal_id=${selectedGoalId}`).then((res) => {
+      if (res.success && res.data) {
+        setTasks(res.data.filter((t) => t.status !== "archived" && !t.is_deleted))
+      }
+    }).catch(() => {})
+  }, [selectedGoalId, open, setValue])
 
   const handleFormSubmit = useCallback(
     (data: ActivityFormData) => {
@@ -285,6 +315,30 @@ export function ActivityInputSheet({
                   {goals.map((goal) => (
                     <SelectItem key={goal.id} value={goal.id}>
                       {goal.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {selectedGoalId && tasks.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Link to Task (optional)</Label>
+              <Select
+                value={watch("task_id") ?? ""}
+                onValueChange={(value) =>
+                  setValue("task_id", value || null)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="No task" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No task</SelectItem>
+                  {tasks.map((task) => (
+                    <SelectItem key={task.id} value={task.id}>
+                      {task.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

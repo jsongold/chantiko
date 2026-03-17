@@ -8,8 +8,8 @@ import { features } from "@/lib/features"
 
 const ALL_NAV_ITEMS = [
   { href: "/activity", label: "Activity", icon: Activity, feature: null },
-  { href: "/g", label: "Goals", icon: Target, feature: "goals" as const },
   { href: "/tasks", label: "Tasks", icon: ListChecks, feature: "tasks" as const },
+  { href: "/g", label: "Goals", icon: Target, feature: "goals" as const },
   { href: "/progress", label: "Progress", icon: BarChart3, feature: "progress" as const },
 ]
 

@@ -92,7 +92,7 @@ export function AllTaskList() {
 
   const handleCreate = useCallback(
     async (data: TaskFormData) => {
-      const goalId = selectedGoalId ?? goals[0]?.id
+      const goalId = data.goal_id ?? selectedGoalId ?? goals[0]?.id
       if (!goalId) {
         return
       }
@@ -194,28 +194,13 @@ export function AllTaskList() {
         aria-label="Add task"
       />
 
-      {sheetOpen && !editingTask && goals.length > 0 && (
-        <div className="fixed bottom-0 inset-x-0 z-[60] bg-background border-t px-4 py-2">
-          <label className="text-xs text-muted-foreground">Goal</label>
-          <select
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            value={selectedGoalId ?? goals[0]?.id ?? ""}
-            onChange={(e) => setSelectedGoalId(e.target.value)}
-          >
-            {goals.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       <AddTaskSheet
         open={sheetOpen}
         onOpenChange={handleSheetOpenChange}
         onSubmit={editingTask ? handleUpdate : handleCreate}
         task={editingTask}
+        goals={editingTask ? [] : goals}
+        defaultGoalId={selectedGoalId ?? goals[0]?.id ?? null}
       />
 
       <AlertDialog
