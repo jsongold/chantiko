@@ -5,6 +5,8 @@ export interface Activity {
   value: string
   value_unit: string | null
   category: string
+  goal_id: string | null
+  task_id: string | null
   is_deleted: boolean
   created_at: string
   updated_at: string

@@ -76,6 +76,8 @@ def create_activity(
             value=body.value,
             value_unit=body.value_unit,
             category=body.category,
+            goal_id=UUID(body.goal_id) if body.goal_id else None,
+            task_id=UUID(body.task_id) if body.task_id else None,
         )
         session.add(activity)
         session.commit()
