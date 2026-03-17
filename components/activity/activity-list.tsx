@@ -12,7 +12,9 @@ import {
 import { AddActivityFab } from "@/components/activity/add-activity-fab"
 import { AIEditSection } from "@/components/ai/ai-edit-section"
 import { useActivities } from "@/hooks/useActivities"
-import type { Activity } from "@/types"
+import { useGoalStore } from "@/store/goalStore"
+import { api } from "@/lib/api"
+import type { Activity, GoalWithCounts } from "@/types"
 
 function formatDateLabel(dateString: string): string {
   const date = parseISO(dateString)
@@ -71,6 +73,7 @@ export function ActivityList() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const [historyTitles, setHistoryTitles] = useState<string[]>([])
+  const [goals, setGoals] = useState<GoalWithCounts[]>([])
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -84,6 +87,19 @@ export function ActivityList() {
         /* history fetch is non-critical */
       })
   }, [fetchHistory])
+
+  useEffect(() => {
+    api.get<GoalWithCounts[]>("/goals").then((res) => {
+      if (res.success && res.data) {
+        setGoals(res.data)
+      }
+    }).catch(() => {})
+  }, [])
+
+  const goalMap = useMemo(
+    () => new Map(goals.map((g) => [g.id, g.name])),
+    [goals]
+  )
 
   const handleIntersection = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -199,6 +215,7 @@ export function ActivityList() {
                   activity={activity}
                   onDelete={deleteActivity}
                   onTap={handleTapActivity}
+                  goalName={activity.goal_id ? goalMap.get(activity.goal_id) ?? null : null}
                 />
               ))}
             </div>
@@ -225,6 +242,7 @@ export function ActivityList() {
         onSubmit={editingActivity ? handleUpdateActivity : handleCreateActivity}
         historyTitles={historyTitles}
         activity={editingActivity}
+        goals={goals.map((g) => ({ id: g.id, name: g.name }))}
       />
     </>
   )
