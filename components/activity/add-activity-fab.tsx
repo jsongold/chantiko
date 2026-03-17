@@ -1,11 +1,11 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { Plus, Bot, Zap, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSettingsStore, type AIMode } from "@/store/settingsStore"
 import { features } from "@/lib/features"
-import { cn } from "@/lib/utils"
+
 
 interface AddActivityFabProps {
   onManualOpen: () => void
@@ -71,55 +71,59 @@ export function AddActivityFab({ onManualOpen, onAIOpen, manualLabel = "Add acti
     [setAIMode]
   )
 
-  // Close radial on outside tap
-  useEffect(() => {
-    if (!radialOpen) return
-    const close = () => setRadialOpen(false)
-    const timer = setTimeout(() => document.addEventListener("pointerdown", close), 0)
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener("pointerdown", close)
-    }
-  }, [radialOpen])
-
   const FabIcon = FAB_ICONS[aiMode]
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
-      {/* Radial mode options */}
+    <>
+      {/* Backdrop — closes radial on tap */}
       {radialOpen && (
         <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-3"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          {MODES.map(({ mode, icon: Icon, label }) => (
-            <Button
-              key={mode}
-              variant={mode === aiMode ? "default" : "outline"}
-              size="icon"
-              className="size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
-              aria-label={label}
-              onClick={() => handleSelectMode(mode)}
-            >
-              <Icon className="size-4" />
-            </Button>
-          ))}
-        </div>
+          className="fixed inset-0 z-39"
+          onTouchEnd={() => setRadialOpen(false)}
+          onClick={() => setRadialOpen(false)}
+        />
       )}
 
-      {/* Main FAB */}
-      <Button
-        size="icon-lg"
-        className="rounded-full size-12 shadow-md"
-        aria-label={isAIMode ? "Open AI chat" : manualLabel}
-        onTouchStart={handlePressStart}
-        onTouchEnd={handlePressEnd}
-        onMouseDown={handlePressStart}
-        onMouseUp={handlePressEnd}
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        <FabIcon className="size-5" />
-      </Button>
-    </div>
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
+        {/* Radial mode options */}
+        {radialOpen && (
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-3">
+            {MODES.map(({ mode, icon: Icon, label }) => (
+              <Button
+                key={mode}
+                variant={mode === aiMode ? "default" : "outline"}
+                size="icon"
+                className="size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
+                aria-label={label}
+                onTouchEnd={(e) => {
+                  e.stopPropagation()
+                  handleSelectMode(mode)
+                }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleSelectMode(mode)
+                }}
+              >
+                <Icon className="size-4" />
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* Main FAB */}
+        <Button
+          size="icon-lg"
+          className="rounded-full size-12 shadow-md"
+          aria-label={isAIMode ? "Open AI chat" : manualLabel}
+          onTouchStart={handlePressStart}
+          onTouchEnd={handlePressEnd}
+          onMouseDown={handlePressStart}
+          onMouseUp={handlePressEnd}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <FabIcon className="size-5" />
+        </Button>
+      </div>
+    </>
   )
 }
