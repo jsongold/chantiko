@@ -77,19 +77,6 @@ def _build_app():
         try:
             uid = UUID(user_id)
 
-            existing = session.exec(
-                select(Goal)
-                .where(Goal.user_id == uid)
-                .where(Goal.name == body.name)
-                .where(Goal.is_deleted == False)  # noqa: E712
-            ).first()
-
-            if existing is not None:
-                return error_response(
-                    "A goal with that name already exists",
-                    status_code=409,
-                )
-
             goal = Goal(
                 user_id=uid,
                 name=body.name,
