@@ -111,6 +111,10 @@ export function GoalList() {
                 key={goal.id}
                 goal={goal}
                 onTap={() => router.push(`/g/${goal.id}/t`)}
+                onEdit={() => {
+                  setEditingGoal(goal)
+                  setSheetOpen(true)
+                }}
                 onDelete={() => deleteGoal(goal.id)}
               />
             ))}
