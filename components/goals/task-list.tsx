@@ -15,6 +15,7 @@ import {
 import { ChevronRightIcon } from "lucide-react"
 import { RouteButton } from "@/components/shared/route-button"
 import { EmptyState } from "@/components/shared/empty-state"
+import { AlertDialog } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import type { Task } from "@/types"
 
@@ -54,6 +55,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
     useTasks(goalId)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTasks()
@@ -158,7 +160,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
                             setEditingTask(task)
                             setSheetOpen(true)
                           }}
-                          onDelete={() => deleteTask(task.id)}
+                          onDelete={() => setDeletingTaskId(task.id)}
                         />
                       ))}
                     </div>
@@ -184,6 +186,18 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
         onSubmit={editingTask ? handleUpdate : handleCreate}
         task={editingTask}
         existingLabels={existingLabels}
+      />
+      <AlertDialog
+        open={deletingTaskId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingTaskId(null) }}
+        title="Delete task?"
+        description="This action cannot be undone."
+        onConfirm={() => {
+          if (deletingTaskId) {
+            deleteTask(deletingTaskId)
+            setDeletingTaskId(null)
+          }
+        }}
       />
     </>
   )
