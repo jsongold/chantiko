@@ -45,6 +45,9 @@ next-env.d.ts
 # tasks
 /tasks/
 
+# Claude Code local settings (machine-specific, not shared)
+.claude/settings.local.json
+
 # Python
 __pycache__/
 *.py[cod]
