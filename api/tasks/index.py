@@ -15,7 +15,11 @@ def _build_app():
     from api._lib.models import Task
     from api._lib.schemas import TaskCreate, TaskUpdate, error_response, success_response
 
+    from api._lib.logging import add_logging_middleware, configure_logging
+
+    configure_logging()
     app = FastAPI()
+    add_logging_middleware(app)
 
     def _get_task_for_user(
         session: Session, task_id: UUID, user_id: str
@@ -50,7 +54,7 @@ def _build_app():
 
             return success_response(data)
         except Exception:
-            logger.exception("Failed to fetch tasks")
+            logger.exception("Failed to fetch tasks", extra={"user_id": user_id[:8], "endpoint": "/api/tasks"})
             return error_response("Failed to fetch tasks", status_code=500)
 
     @app.post("/api/tasks")
@@ -77,10 +81,11 @@ def _build_app():
             session.commit()
             session.refresh(task)
 
+            logger.info("Task created: %s", task.id, extra={"user_id": user_id[:8], "endpoint": "/api/tasks"})
             return success_response(task.model_dump(mode="json"))
         except Exception:
             session.rollback()
-            logger.exception("Failed to create task")
+            logger.exception("Failed to create task", extra={"user_id": user_id[:8], "endpoint": "/api/tasks"})
             return error_response("Failed to create task", status_code=500)
 
     @app.patch("/api/tasks/{id}")
@@ -106,10 +111,11 @@ def _build_app():
             session.commit()
             session.refresh(task)
 
+            logger.info("Task updated: %s", id, extra={"user_id": user_id[:8], "endpoint": f"/api/tasks/{id}"})
             return success_response(task.model_dump(mode="json"))
         except Exception:
             session.rollback()
-            logger.exception("Failed to update task")
+            logger.exception("Failed to update task", extra={"user_id": user_id[:8], "endpoint": f"/api/tasks/{id}"})
             return error_response("Failed to update task", status_code=500)
 
     @app.delete("/api/tasks/{id}")
@@ -129,10 +135,11 @@ def _build_app():
             session.add(task)
             session.commit()
 
+            logger.info("Task deleted: %s", id, extra={"user_id": user_id[:8], "endpoint": f"/api/tasks/{id}"})
             return success_response({"deleted": str(id)})
         except Exception:
             session.rollback()
-            logger.exception("Failed to delete task")
+            logger.exception("Failed to delete task", extra={"user_id": user_id[:8], "endpoint": f"/api/tasks/{id}"})
             return error_response("Failed to delete task", status_code=500)
 
     return app

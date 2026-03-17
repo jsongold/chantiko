@@ -34,7 +34,9 @@ export function useGoals() {
       const response = await api.post<GoalWithCounts>("/goals", data)
 
       if (!response.success || !response.data) {
-        throw new Error(response.error ?? "Failed to create goal")
+        const err = response.error ?? "Failed to create goal"
+        console.error("[Goals] create failed:", err)
+        throw new Error(err)
       }
 
       addGoal(response.data)
@@ -48,7 +50,9 @@ export function useGoals() {
       const response = await api.patch<GoalWithCounts>(`/goals/${id}`, data)
 
       if (!response.success || !response.data) {
-        throw new Error(response.error ?? "Failed to update goal")
+        const err = response.error ?? "Failed to update goal"
+        console.error("[Goals] update failed:", err)
+        throw new Error(err)
       }
 
       updateGoal(id, response.data)
@@ -62,7 +66,9 @@ export function useGoals() {
       const response = await api.delete(`/goals/${id}`)
 
       if (!response.success) {
-        throw new Error(response.error ?? "Failed to delete goal")
+        const err = response.error ?? "Failed to delete goal"
+        console.error("[Goals] delete failed:", err)
+        throw new Error(err)
       }
 
       removeGoal(id)

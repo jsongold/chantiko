@@ -43,7 +43,10 @@ async function request<T>(
     const error = await response.json().catch(() => ({
       error: "Request failed",
     }))
-    return { success: false, error: error.error || "Request failed" }
+    const msg = error.error || "Request failed"
+    const method = options.method || "GET"
+    console.error(`[API] ${method} ${path} ${response.status}: ${msg}`)
+    return { success: false, error: msg }
   }
 
   return response.json()
