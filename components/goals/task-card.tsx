@@ -2,7 +2,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
-import { PencilIcon, Trash2Icon } from "lucide-react"
+import { Trash2Icon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format, parseISO } from "date-fns"
 import type { Task } from "@/types"
@@ -19,7 +19,7 @@ export function TaskCard({ task, onToggle, onTap, onDelete, goalName }: TaskCard
   const isDone = task.status === "done"
 
   return (
-    <div className="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/50">
+    <div className="flex items-start gap-3 rounded-lg border bg-card p-3">
       <Checkbox
         checked={isDone}
         onCheckedChange={() => onToggle()}
@@ -56,14 +56,6 @@ export function TaskCard({ task, onToggle, onTap, onDelete, goalName }: TaskCard
           </span>
         )}
       </p>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={onTap}
-        aria-label={`Edit task ${task.name}`}
-      >
-        <PencilIcon className="size-3.5 text-muted-foreground" />
-      </Button>
       <Button
         variant="ghost"
         size="icon-sm"

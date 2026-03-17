@@ -8,12 +8,15 @@ import { EmptyState } from "@/components/shared/empty-state"
 import {
   ActivityInputSheet,
   type ActivityFormData,
+  activityFormSchema,
 } from "@/components/activity/activity-input-sheet"
 import { AddActivityFab } from "@/components/activity/add-activity-fab"
+import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { useActivities } from "@/hooks/useActivities"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import { api } from "@/lib/api"
 import type { Activity, GoalWithCounts, Task } from "@/types"
+import { features } from "@/lib/features"
 
 function formatDateLabel(dateString: string): string {
   const date = parseISO(dateString)
@@ -70,6 +73,7 @@ export function ActivityList() {
   } = useActivities()
 
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [aiChatOpen, setAIChatOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null)
   const [historyTitles, setHistoryTitles] = useState<string[]>([])
@@ -213,10 +217,13 @@ export function ActivityList() {
         </div>
       )}
 
-      <AddActivityFab onClick={() => {
-        setEditingActivity(null)
-        setSheetOpen(true)
-      }} />
+      <AddActivityFab
+        onManualOpen={() => {
+          setEditingActivity(null)
+          setSheetOpen(true)
+        }}
+        onAIOpen={() => setAIChatOpen(true)}
+      />
 
       <ActivityInputSheet
         open={sheetOpen}
@@ -241,6 +248,42 @@ export function ActivityList() {
           }
         }}
       />
+
+      {features.aiChat && (
+        <AIChatSheet
+          open={aiChatOpen}
+          onOpenChange={setAIChatOpen}
+          handlers={{
+            onCreate: async (entity, data) => {
+              if (entity === "activity") {
+                const parsed = activityFormSchema.safeParse(data)
+                if (parsed.success) await createActivity(parsed.data)
+              }
+            },
+            onUpdate: async (entity, id, data) => {
+              if (entity === "activity") {
+                const parsed = activityFormSchema.safeParse(data)
+                if (parsed.success) await updateActivity(id, parsed.data)
+              }
+            },
+            onDelete: async (entity, id) => {
+              if (entity === "activity") {
+                await deleteActivity(id)
+              }
+            },
+          }}
+          context={{
+            recent_activities: activities.slice(0, 10).map((a) => ({
+              id: a.id,
+              title: a.title,
+              value: a.value,
+              value_unit: a.value_unit,
+              category: a.category,
+            })),
+            goals: goals.map((g) => ({ id: g.id, name: g.name })),
+          }}
+        />
+      )}
     </>
   )
 }

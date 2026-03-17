@@ -10,6 +10,7 @@ from api.activities.index import _build_app as build_activities
 from api.goals.index import _build_app as build_goals
 from api.tasks.index import _build_app as build_tasks
 from api.ai.index import _build_app as build_ai
+from api.settings.index import _build_app as build_settings
 
 app = FastAPI()
 
@@ -26,6 +27,7 @@ sub_apps = [
     build_goals(),
     build_tasks(),
     build_ai(),
+    build_settings(),
 ]
 
 for sub_app in sub_apps:

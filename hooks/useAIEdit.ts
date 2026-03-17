@@ -2,8 +2,9 @@
 
 import { useCallback, useState } from "react"
 import { api } from "@/lib/api"
-import { useSettingsStore } from "@/store/settingsStore"
 import type { AIEditResponse, Operation } from "@/types"
+
+const APP_LLM_MODEL = "gpt-4o-mini"
 
 interface OperationHandlers {
   onCreate?: (data: Record<string, unknown>) => Promise<void>
@@ -18,7 +19,6 @@ interface AIEditState {
 }
 
 export function useAIEdit() {
-  const llmModel = useSettingsStore((s) => s.llmModel)
   const [state, setState] = useState<AIEditState>({
     isLoading: false,
     preview: null,
@@ -41,7 +41,7 @@ export function useAIEdit() {
         const response = await api.post<AIEditResponse>(`/ai/${endpoint}`, {
           command,
           context,
-          model: llmModel,
+          model: APP_LLM_MODEL,
         })
 
         if (!response.success || !response.data) {
@@ -71,7 +71,7 @@ export function useAIEdit() {
         return null
       }
     },
-    [llmModel]
+    []
   )
 
   const applyOperations = useCallback(

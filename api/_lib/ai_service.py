@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 
 import anthropic
+
+logger = logging.getLogger(__name__)
 from openai import OpenAI
 
 ALLOWED_MODELS = {
@@ -110,13 +113,153 @@ def _call_model(
         )
         raw_text = response.choices[0].message.content.strip()
 
+    if raw_text.startswith("```"):
+        lines = raw_text.splitlines()
+        raw_text = "\n".join(
+            line for line in lines if not line.strip().startswith("```")
+        ).strip()
+
     try:
         return json.loads(raw_text)
     except json.JSONDecodeError:
         return {
             "operations": [],
-            "summary": "Failed to parse AI response as JSON.",
+            "summary": "Could not understand the command.",
         }
+
+
+CHAT_SYSTEM_PROMPT = """You are an assistant that converts natural language commands into structured JSON operations on a user's activities, goals, and tasks.
+
+You MUST respond with ONLY valid JSON — no markdown, no explanation, no code fences.
+
+Output format:
+{
+  "operations": [
+    {"op": "create", "entity": "activity", "data": {"title": "...", "value": "...", "value_unit": null, "category": "Other", "goal_id": null}},
+    {"op": "create", "entity": "goal", "data": {"name": "...", "description": "", "target_value": null, "due_date": null, "status": "active"}},
+    {"op": "create", "entity": "task", "data": {"goal_id": "<uuid>", "name": "...", "description": "", "status": "active"}},
+    {"op": "update", "entity": "activity"|"goal"|"task", "id": "<uuid>", "data": {"title": "..."}},
+    {"op": "delete", "entity": "activity"|"goal"|"task", "id": "<uuid>"}
+  ],
+  "summary": "Human-readable description of what will happen"
+}
+
+Rules:
+- "op" must be one of: "create", "update", "delete"
+- "entity" must be "activity", "goal", or "task"
+- "id" is required for "update" and "delete" — use the id from context
+- "data" is required for "create" and "update" — include only changed fields
+- For activity "category", use only: "Exercise", "Study", "Work", "Other"
+- For activity "value_unit", use only: "minutes", "hours", "reps", "sets", "times", "km", "miles", "steps", "kg", "lbs", "pages", "calories", or null
+- If the command is unclear or impossible, return {"operations": [], "summary": "Could not understand the command."}
+"""
+
+SUGGEST_ACTIVITY_SYSTEM_PROMPT = """You are an assistant that parses a plain-language activity title and extracts structured fields.
+
+You MUST respond with ONLY valid JSON — no markdown, no explanation, no code fences.
+
+Output format:
+{
+  "title": "Clean title of the activity",
+  "value": "numeric or text value (e.g. '30')",
+  "value_unit": "one of the allowed units or null",
+  "category": "one of the allowed categories",
+  "goal_id": null
+}
+
+Rules:
+- "value_unit" must be one of: "minutes", "hours", "reps", "sets", "times", "km", "miles", "steps", "kg", "lbs", "pages", "calories" — or null
+- "category" must be one of: "Exercise", "Study", "Work", "Other"
+- If "goal_id" can be inferred from context goals, set it; otherwise null
+- "value" must be a non-empty string
+- If you cannot parse a value, use "1"
+"""
+
+
+def _call_chat_model(
+    system_prompt: str,
+    command: str,
+    history: list[dict],
+    context: dict,
+    model: str | None = None,
+) -> dict:
+    model = model or os.environ.get("LLM_MODEL", DEFAULT_MODEL)
+    if model not in ALLOWED_MODELS:
+        model = DEFAULT_MODEL
+
+    messages: list[dict] = []
+    for turn in history[-10:]:
+        role = turn.get("role") if isinstance(turn, dict) else getattr(turn, "role", None)
+        content = turn.get("content") if isinstance(turn, dict) else getattr(turn, "content", None)
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": str(content)[:2000]})
+
+    context_str = json.dumps(context, default=str) if context else "{}"
+    user_message = f"Context:\n{context_str}\n\nCommand: {command}"
+    messages.append({"role": "user", "content": user_message})
+
+    if model in ANTHROPIC_MODELS:
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY not configured")
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            system=system_prompt,
+            messages=messages,
+        )
+        raw_text = response.content[0].text.strip()
+    else:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY not configured")
+        client = OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=1024,
+            messages=[{"role": "system", "content": system_prompt}] + messages,
+        )
+        raw_text = response.choices[0].message.content.strip()
+
+    # Strip markdown code fences if present (e.g. ```json ... ```)
+    if raw_text.startswith("```"):
+        lines = raw_text.splitlines()
+        raw_text = "\n".join(
+            line for line in lines if not line.strip().startswith("```")
+        ).strip()
+
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        logger.warning("Failed to parse AI response as JSON: %s", raw_text[:200])
+        return {
+            "operations": [],
+            "summary": "I couldn't understand that request. Try something like 'log 30 min run' or 'add a goal to read 10 books'.",
+        }
+
+
+def generate_chat_response(
+    command: str,
+    history: list[dict],
+    context: dict,
+    model: str | None = None,
+) -> dict:
+    return _call_chat_model(CHAT_SYSTEM_PROMPT, command, history, context, model)
+
+
+def generate_activity_suggestion(
+    title_input: str,
+    context: dict,
+    model: str | None = None,
+) -> dict:
+    return _call_chat_model(
+        SUGGEST_ACTIVITY_SYSTEM_PROMPT,
+        title_input,
+        [],
+        context,
+        model,
+    )
 
 
 def generate_activity_edit(
