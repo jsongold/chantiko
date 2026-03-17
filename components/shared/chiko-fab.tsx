@@ -77,52 +77,50 @@ export function ChikoFab({ onManualOpen, onAIOpen, manualLabel = "Add activity" 
       {/* Backdrop — closes radial on tap */}
       {radialOpen && (
         <div
-          className="fixed inset-0 z-39"
+          className="fixed inset-0 z-30"
           onTouchEnd={() => setRadialOpen(false)}
           onClick={() => setRadialOpen(false)}
         />
       )}
 
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
-        {/* Radial mode options */}
-        {radialOpen && (
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-3">
-            {MODES.map(({ mode, icon: Icon, label }) => (
-              <Button
-                key={mode}
-                variant={mode === aiMode ? "default" : "outline"}
-                size="icon"
-                className="size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
-                aria-label={label}
-                onTouchEnd={(e) => {
-                  e.stopPropagation()
-                  handleSelectMode(mode)
-                }}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleSelectMode(mode)
-                }}
-              >
-                <Icon className="size-4" />
-              </Button>
-            ))}
-          </div>
-        )}
+      {/* Radial mode options */}
+      {radialOpen && (
+        <div className="fixed bottom-[6.5rem] left-1/2 z-40 flex -translate-x-1/2 gap-3">
+          {MODES.map(({ mode, icon: Icon, label }) => (
+            <Button
+              key={mode}
+              variant={mode === aiMode ? "default" : "outline"}
+              size="icon"
+              className="size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
+              aria-label={label}
+              onTouchEnd={(e) => {
+                e.stopPropagation()
+                handleSelectMode(mode)
+              }}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSelectMode(mode)
+              }}
+            >
+              <Icon className="size-4" />
+            </Button>
+          ))}
+        </div>
+      )}
 
-        {/* Main FAB */}
-        <Button
-          size="icon-lg"
-          className="rounded-full size-12 shadow-md"
-          aria-label={isAIMode ? "Open AI chat" : manualLabel}
-          onTouchStart={handlePressStart}
-          onTouchEnd={handlePressEnd}
-          onMouseDown={handlePressStart}
-          onMouseUp={handlePressEnd}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <FabIcon className="size-5" />
-        </Button>
-      </div>
+      {/* Main FAB */}
+      <Button
+        size="icon-lg"
+        className="fixed bottom-20 left-1/2 z-40 -translate-x-1/2 rounded-full size-12 shadow-md"
+        aria-label={isAIMode ? "Open AI chat" : manualLabel}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <FabIcon className="size-5" />
+      </Button>
     </>
   )
 }
