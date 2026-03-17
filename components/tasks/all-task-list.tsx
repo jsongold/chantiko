@@ -165,7 +165,7 @@ export function AllTaskList() {
                 <p className="sticky top-0 z-10 bg-background px-0 py-2 text-xs font-medium text-muted-foreground">
                   {group.label}
                 </p>
-                <div className="space-y-1 rounded-lg border bg-card">
+                <div className="space-y-1">
                   {group.tasks.map((task) => (
                     <TaskCard
                       key={task.id}
