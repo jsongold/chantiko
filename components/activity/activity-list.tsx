@@ -162,6 +162,8 @@ export function ActivityList() {
           value: String(data.value ?? ""),
           value_unit: data.value_unit ? String(data.value_unit) : null,
           category: String(data.category ?? "Other"),
+          goal_id: data.goal_id ? String(data.goal_id) : null,
+          task_id: data.task_id ? String(data.task_id) : null,
         })
       },
       onDelete: async (id: string) => {
