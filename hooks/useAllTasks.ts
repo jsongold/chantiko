@@ -30,7 +30,7 @@ export function useAllTasks() {
   }, [setLoading, setTasks])
 
   const createTask = useCallback(
-    async (data: { goal_id: string; name: string; description?: string; label?: string | null; due_date?: string | null; scheduled_start_at?: string | null; scheduled_end_at?: string | null; status?: string }) => {
+    async (data: { goal_id: string; name: string; description?: string; label?: string | null; due_date?: string | null; scheduled_start_at?: string | null; scheduled_end_at?: string | null; rrule?: string | null; status?: string }) => {
       const response = await api.post<Task>("/tasks", data)
 
       if (!response.success || !response.data) {

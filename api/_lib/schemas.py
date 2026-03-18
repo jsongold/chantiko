@@ -87,6 +87,7 @@ class TaskCreate(BaseModel):
     due_date: Optional[str] = None
     scheduled_start_at: Optional[str] = None
     scheduled_end_at: Optional[str] = None
+    rrule: Optional[str] = None
     status: Literal["active", "done"] = "active"
 
 
@@ -99,6 +100,7 @@ class TaskUpdate(BaseModel):
     due_date: Optional[str] = None
     scheduled_start_at: Optional[str] = None
     scheduled_end_at: Optional[str] = None
+    rrule: Optional[str] = None
     status: Optional[Literal["active", "done", "archived"]] = None
 
 
