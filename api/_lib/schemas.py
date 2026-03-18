@@ -85,6 +85,8 @@ class TaskCreate(BaseModel):
     target_value: Optional[str] = Field(None, max_length=100)
     current_value: Optional[str] = Field(None, max_length=100)
     due_date: Optional[str] = None
+    scheduled_start_at: Optional[str] = None
+    scheduled_end_at: Optional[str] = None
     status: Literal["active", "done"] = "active"
 
 
@@ -95,6 +97,8 @@ class TaskUpdate(BaseModel):
     target_value: Optional[str] = Field(None, max_length=100)
     current_value: Optional[str] = Field(None, max_length=100)
     due_date: Optional[str] = None
+    scheduled_start_at: Optional[str] = None
+    scheduled_end_at: Optional[str] = None
     status: Optional[Literal["active", "done", "archived"]] = None
 
 
@@ -118,6 +122,7 @@ class AIChatRequest(BaseModel):
     history: list[HistoryItem] = Field(default_factory=list, max_length=10)
     context: dict = Field(default_factory=dict, max_length=20)
     model: Optional[str] = None
+    reply_to_id: Optional[str] = None
 
 
 class ActivitySuggestRequest(BaseModel):

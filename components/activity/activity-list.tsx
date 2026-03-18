@@ -13,6 +13,7 @@ import {
 import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { useActivities } from "@/hooks/useActivities"
+import { useAIChatHandlers } from "@/hooks/useAIChatHandlers"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import { api } from "@/lib/api"
 import type { Activity, GoalWithCounts, Task } from "@/types"
@@ -80,6 +81,33 @@ export function ActivityList() {
   const [goals, setGoals] = useState<GoalWithCounts[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const aiHandlers = useAIChatHandlers({
+    entityType: "activity",
+    crud: {
+      create: async (data) => {
+        const parsed = activityFormSchema.safeParse({
+          task_id: null,
+          goal_id: null,
+          ...data,
+          title: String(data.title || data.name || ""),
+        })
+        if (parsed.success) await createActivity(parsed.data)
+      },
+      update: async (id, data) => {
+        const parsed = activityFormSchema.safeParse({
+          task_id: null,
+          goal_id: null,
+          ...data,
+          title: String(data.title || data.name || ""),
+        })
+        if (parsed.success) await updateActivity(id, parsed.data)
+      },
+      delete: async (id) => {
+        await deleteActivity(id)
+      },
+    },
+  })
 
   useEffect(() => {
     fetchActivities()
@@ -253,35 +281,7 @@ export function ActivityList() {
         <AIChatSheet
           open={aiChatOpen}
           onOpenChange={setAIChatOpen}
-          handlers={{
-            onCreate: async (entity, data) => {
-              if (entity === "activity") {
-                const parsed = activityFormSchema.safeParse({
-                  task_id: null,
-                  goal_id: null,
-                  ...data,
-                  title: String(data.title || data.name || ""),
-                })
-                if (parsed.success) await createActivity(parsed.data)
-              }
-            },
-            onUpdate: async (entity, id, data) => {
-              if (entity === "activity") {
-                const parsed = activityFormSchema.safeParse({
-                  task_id: null,
-                  goal_id: null,
-                  ...data,
-                  title: String(data.title || data.name || ""),
-                })
-                if (parsed.success) await updateActivity(id, parsed.data)
-              }
-            },
-            onDelete: async (entity, id) => {
-              if (entity === "activity") {
-                await deleteActivity(id)
-              }
-            },
-          }}
+          handlers={aiHandlers}
           context={{
             page: "activities",
             recent_activities: activities.slice(0, 10).map((a) => ({

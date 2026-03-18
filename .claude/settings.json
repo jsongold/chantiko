@@ -17,7 +17,20 @@
       "Bash(pnpm tsc:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Read(//Users/yasumasa_takemura/.claude/**)"
+      "Read(//Users/yasumasa_takemura/.claude/**)",
+      "Skill(update-config)",
+      "Bash(gh pr:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:www.dreamstime.com)",
+      "WebFetch(domain:www.google.com)",
+      "Skill(pr)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm vitest:*)",
+      "Bash(npx shadcn@latest add switch --yes)",
+      "Bash(pnpm build:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

@@ -4,7 +4,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Trash2Icon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, isSameDay } from "date-fns"
+import { Clock } from "lucide-react"
 import type { Task } from "@/types"
 
 interface TaskCardProps {
@@ -48,6 +49,20 @@ export function TaskCard({ task, onToggle, onTap, onDelete, goalName }: TaskCard
         {task.due_date && (
           <span className="text-xs text-muted-foreground mt-0.5">
             {format(parseISO(task.due_date), "MMM d")}
+          </span>
+        )}
+        {task.scheduled_start_at && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+            <Clock className="size-3 shrink-0" />
+            {format(new Date(task.scheduled_start_at), "MMM d, HH:mm")}
+            {task.scheduled_end_at && (
+              <>
+                {" – "}
+                {isSameDay(new Date(task.scheduled_start_at), new Date(task.scheduled_end_at))
+                  ? format(new Date(task.scheduled_end_at), "HH:mm")
+                  : format(new Date(task.scheduled_end_at), "MMM d, HH:mm")}
+              </>
+            )}
           </span>
         )}
         {goalName && (

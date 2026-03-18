@@ -1,17 +1,26 @@
 "use client"
 
 import { useState, useCallback, type FormEvent } from "react"
-import { Send } from "lucide-react"
+import { Send, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import type { ChatMessage } from "@/store/aiStore"
 
 interface AIEditBarProps {
-  onSubmit: (command: string) => void
+  onSubmit: (command: string, replyToId?: string) => void
   isLoading: boolean
   placeholder?: string
+  replyTo?: ChatMessage | null
+  onCancelReply?: () => void
 }
 
-export function AIEditBar({ onSubmit, isLoading, placeholder = "Ask AI to edit activities..." }: AIEditBarProps) {
+export function AIEditBar({
+  onSubmit,
+  isLoading,
+  placeholder = "Ask AI to edit activities...",
+  replyTo,
+  onCancelReply,
+}: AIEditBarProps) {
   const [command, setCommand] = useState("")
 
   const handleSubmit = useCallback(
@@ -21,33 +30,50 @@ export function AIEditBar({ onSubmit, isLoading, placeholder = "Ask AI to edit a
       if (!trimmed || isLoading) {
         return
       }
-      onSubmit(trimmed)
+      onSubmit(trimmed, replyTo?.id)
       setCommand("")
     },
-    [command, isLoading, onSubmit]
+    [command, isLoading, onSubmit, replyTo]
   )
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex items-center gap-2 border-b px-4 py-2"
-    >
-      <Input
-        value={command}
-        onChange={(e) => setCommand(e.target.value)}
-        placeholder={placeholder}
-        disabled={isLoading}
-        className="flex-1"
-      />
-      <Button
-        type="submit"
-        size="icon"
-        variant="ghost"
-        disabled={isLoading || command.trim().length === 0}
-        aria-label="Send AI command"
+    <div>
+      {replyTo && (
+        <div className="flex items-center gap-2 border-b px-4 py-1.5 text-xs text-muted-foreground">
+          <span className="min-w-0 flex-1 truncate">
+            Replying to: {replyTo.content}
+          </span>
+          <button
+            type="button"
+            onClick={onCancelReply}
+            className="shrink-0"
+            aria-label="Cancel reply"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 border-b px-4 py-2"
       >
-        <Send className="size-4" />
-      </Button>
-    </form>
+        <Input
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          placeholder={placeholder}
+          disabled={isLoading}
+          className="flex-1"
+        />
+        <Button
+          type="submit"
+          size="icon"
+          variant="ghost"
+          disabled={isLoading || command.trim().length === 0}
+          aria-label="Send AI command"
+        >
+          <Send className="size-4" />
+        </Button>
+      </form>
+    </div>
   )
 }
