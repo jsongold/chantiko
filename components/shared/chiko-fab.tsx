@@ -12,10 +12,11 @@ interface ChikoFabProps {
   manualLabel?: string
 }
 
-const MODES: { mode: AIMode; icon: React.ElementType; label: string }[] = [
-  { mode: "manual", icon: Pencil, label: "Manual" },
-  { mode: "ask", icon: Bot, label: "Ask AI" },
-  { mode: "auto", icon: Zap, label: "Auto AI" },
+// Radial positions: 135° (top-left), 90° (top), 45° (top-right) at r=70px
+const MODES: { mode: AIMode; icon: React.ElementType; label: string; x: number; y: number }[] = [
+  { mode: "manual", icon: Pencil, label: "Manual", x: -50, y: -50 },
+  { mode: "ask", icon: Bot, label: "Ask AI", x: 0, y: -70 },
+  { mode: "auto", icon: Zap, label: "Auto AI", x: 50, y: -50 },
 ]
 
 const FAB_ICONS: Record<AIMode, React.ElementType> = {
@@ -83,30 +84,32 @@ export function ChikoFab({ onManualOpen, onAIOpen, manualLabel = "Add activity" 
         />
       )}
 
-      {/* Radial mode options */}
-      {radialOpen && (
-        <div className="fixed bottom-[6.5rem] left-1/2 z-40 flex -translate-x-1/2 gap-3">
-          {MODES.map(({ mode, icon: Icon, label }) => (
-            <Button
-              key={mode}
-              variant={mode === aiMode ? "default" : "outline"}
-              size="icon"
-              className="size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
-              aria-label={label}
-              onTouchEnd={(e) => {
-                e.stopPropagation()
-                handleSelectMode(mode)
-              }}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSelectMode(mode)
-              }}
-            >
-              <Icon className="size-4" />
-            </Button>
-          ))}
-        </div>
-      )}
+      {/* Radial mode options — arc at 135°, 90°, 45° */}
+      {radialOpen &&
+        MODES.map(({ mode, icon: Icon, label, x, y }) => (
+          <Button
+            key={mode}
+            variant={mode === aiMode ? "default" : "outline"}
+            size="icon"
+            className="fixed z-40 size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
+            style={{
+              bottom: `calc(5rem + 1.5rem - ${y}px)`,
+              left: `calc(50% + ${x}px)`,
+              transform: "translate(-50%, 50%)",
+            }}
+            aria-label={label}
+            onTouchEnd={(e) => {
+              e.stopPropagation()
+              handleSelectMode(mode)
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleSelectMode(mode)
+            }}
+          >
+            <Icon className="size-4" />
+          </Button>
+        ))}
 
       {/* Main FAB */}
       <Button
