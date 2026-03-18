@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectTrigger,
@@ -30,13 +31,25 @@ export interface GoalOption {
   name: string
 }
 
-const taskFormSchema = z.object({
-  name: z.string().min(1, "Name is required").max(200),
-  description: z.string().max(500),
-  label: z.string().nullable(),
-  due_date: z.string().nullable(),
-  goal_id: z.string().nullable(),
-})
+const taskFormSchema = z
+  .object({
+    name: z.string().min(1, "Name is required").max(200),
+    description: z.string().max(500),
+    label: z.string().nullable(),
+    due_date: z.string().nullable(),
+    goal_id: z.string().nullable(),
+    scheduled_start_at: z.string().nullable().optional(),
+    scheduled_end_at: z.string().nullable().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.scheduled_start_at && data.scheduled_end_at) {
+        return new Date(data.scheduled_end_at) >= new Date(data.scheduled_start_at)
+      }
+      return true
+    },
+    { message: "End must be after start", path: ["scheduled_end_at"] }
+  )
 
 export type TaskFormData = z.infer<typeof taskFormSchema>
 
@@ -60,6 +73,7 @@ export function AddTaskSheet({
   defaultGoalId = null,
 }: AddTaskSheetProps) {
   const isEditMode = task !== null && task !== undefined
+  const [scheduleEnabled, setScheduleEnabled] = useState(false)
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
@@ -69,31 +83,49 @@ export function AddTaskSheet({
       label: null,
       due_date: null,
       goal_id: defaultGoalId,
+      scheduled_start_at: null,
+      scheduled_end_at: null,
     },
   })
 
   useEffect(() => {
     if (task) {
+      const hasSchedule = Boolean(task.scheduled_start_at)
+      setScheduleEnabled(hasSchedule)
       form.reset({
         name: task.name,
         description: task.description ?? "",
         label: task.label,
         due_date: task.due_date ? task.due_date.slice(0, 10) : null,
         goal_id: task.goal_id,
+        scheduled_start_at: task.scheduled_start_at
+          ? task.scheduled_start_at.slice(0, 16)
+          : null,
+        scheduled_end_at: task.scheduled_end_at
+          ? task.scheduled_end_at.slice(0, 16)
+          : null,
       })
     } else {
+      setScheduleEnabled(false)
       form.reset({
         name: "",
         description: "",
         label: null,
         due_date: null,
         goal_id: defaultGoalId ?? goals[0]?.id ?? null,
+        scheduled_start_at: null,
+        scheduled_end_at: null,
       })
     }
   }, [task, form, defaultGoalId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (values: TaskFormData) => {
-    onSubmit(values)
+    const submitData = {
+      ...values,
+      scheduled_start_at: scheduleEnabled ? values.scheduled_start_at ?? null : null,
+      scheduled_end_at: scheduleEnabled ? values.scheduled_end_at ?? null : null,
+    }
+    onSubmit(submitData)
     form.reset()
     onOpenChange(false)
   }
@@ -159,6 +191,42 @@ export function AddTaskSheet({
                   <option key={label} value={label} />
                 ))}
               </datalist>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="schedule-toggle">Schedule</Label>
+              <Switch
+                id="schedule-toggle"
+                checked={scheduleEnabled}
+                onCheckedChange={setScheduleEnabled}
+              />
+            </div>
+            {scheduleEnabled && (
+              <div className="space-y-3 rounded-md border p-3">
+                <div className="space-y-2">
+                  <Label htmlFor="task-start">Start</Label>
+                  <Input
+                    id="task-start"
+                    type="datetime-local"
+                    {...form.register("scheduled_start_at")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="task-end">End</Label>
+                  <Input
+                    id="task-end"
+                    type="datetime-local"
+                    {...form.register("scheduled_end_at")}
+                  />
+                  {form.formState.errors.scheduled_end_at && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.scheduled_end_at.message}
+                    </p>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 

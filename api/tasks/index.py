@@ -100,6 +100,8 @@ def _build_app():
                 target_value=body.target_value,
                 current_value=body.current_value,
                 due_date=datetime.fromisoformat(body.due_date) if body.due_date else None,
+                scheduled_start_at=datetime.fromisoformat(body.scheduled_start_at) if body.scheduled_start_at else None,
+                scheduled_end_at=datetime.fromisoformat(body.scheduled_end_at) if body.scheduled_end_at else None,
                 status=body.status,
             )
             session.add(task)
@@ -128,8 +130,9 @@ def _build_app():
             if not update_data:
                 return error_response("No fields to update")
 
+            datetime_fields = {"due_date", "scheduled_start_at", "scheduled_end_at"}
             for field, value in update_data.items():
-                if field == "due_date" and isinstance(value, str):
+                if field in datetime_fields and isinstance(value, str):
                     value = datetime.fromisoformat(value)
                 setattr(task, field, value)
             task.updated_at = datetime.now(timezone.utc)

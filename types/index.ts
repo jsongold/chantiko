@@ -61,6 +61,8 @@ export interface Task {
   target_value: string | null
   current_value: string | null
   due_date: string | null
+  scheduled_start_at: string | null
+  scheduled_end_at: string | null
   status: "active" | "done" | "archived"
   is_deleted: boolean
   created_at: string

@@ -11,6 +11,7 @@ import { GoalDetailSheet } from "@/components/goals/goal-detail-sheet"
 import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
 import { useAIChatHandlers } from "@/hooks/useAIChatHandlers"
+import { AlertDialog } from "@/components/ui/alert-dialog"
 import { EmptyState } from "@/components/shared/empty-state"
 import { features } from "@/lib/features"
 import type { GoalWithCounts } from "@/types"
@@ -22,6 +23,7 @@ export function GoalList() {
   const [aiChatOpen, setAIChatOpen] = useState(false)
   const [detailGoal, setDetailGoal] = useState<GoalWithCounts | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null)
 
   const aiHandlers = useAIChatHandlers({
     entityType: "goal",
@@ -109,7 +111,7 @@ export function GoalList() {
                   setDetailGoal(goal)
                   setDetailOpen(true)
                 }}
-                onDelete={() => deleteGoal(goal.id)}
+                onDelete={() => setDeletingGoalId(goal.id)}
               />
             ))}
           </div>
@@ -133,6 +135,21 @@ export function GoalList() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onUpdate={handleUpdate}
+      />
+
+      <AlertDialog
+        open={deletingGoalId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingGoalId(null)
+        }}
+        title="Delete goal?"
+        description="This will permanently delete the goal and all its tasks."
+        onConfirm={() => {
+          if (deletingGoalId) {
+            deleteGoal(deletingGoalId)
+            setDeletingGoalId(null)
+          }
+        }}
       />
 
       {features.aiChat && (
