@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { Plus, Bot, Zap, Pencil } from "lucide-react"
+import { Plus, Sparkles, Zap, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSettingsStore, type AIMode } from "@/store/settingsStore"
 import { features } from "@/lib/features"
@@ -15,13 +15,13 @@ interface ChikoFabProps {
 // Radial positions: 135° (top-left), 90° (top), 45° (top-right) at r=70px
 const MODES: { mode: AIMode; icon: React.ElementType; label: string; x: number; y: number }[] = [
   { mode: "manual", icon: Pencil, label: "Manual", x: -50, y: -50 },
-  { mode: "ask", icon: Bot, label: "Ask AI", x: 0, y: -70 },
+  { mode: "ask", icon: Sparkles, label: "Ask AI", x: 0, y: -70 },
   { mode: "auto", icon: Zap, label: "Auto AI", x: 50, y: -50 },
 ]
 
 const FAB_ICONS: Record<AIMode, React.ElementType> = {
   manual: Plus,
-  ask: Bot,
+  ask: Sparkles,
   auto: Zap,
 }
 
