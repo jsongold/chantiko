@@ -10,6 +10,7 @@ import {
 import { GoalDetailSheet } from "@/components/goals/goal-detail-sheet"
 import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
+import { useAIChatHandlers } from "@/hooks/useAIChatHandlers"
 import { EmptyState } from "@/components/shared/empty-state"
 import { features } from "@/lib/features"
 import type { GoalWithCounts } from "@/types"
@@ -21,6 +22,32 @@ export function GoalList() {
   const [aiChatOpen, setAIChatOpen] = useState(false)
   const [detailGoal, setDetailGoal] = useState<GoalWithCounts | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+
+  const aiHandlers = useAIChatHandlers({
+    entityType: "goal",
+    crud: {
+      create: async (data) => {
+        await createGoal({
+          name: String(data.name ?? ""),
+          description: data.description != null ? String(data.description) : undefined,
+          target_value: data.target_value != null ? String(data.target_value) : undefined,
+          due_date: data.due_date != null ? String(data.due_date) : undefined,
+          status: "active",
+        })
+      },
+      update: async (id, data) => {
+        await updateGoal(id, {
+          name: data.name != null ? String(data.name) : undefined,
+          description: data.description != null ? String(data.description) : undefined,
+          target_value: data.target_value != null ? String(data.target_value) : undefined,
+          due_date: data.due_date != null ? String(data.due_date) : undefined,
+        })
+      },
+      delete: async (id) => {
+        await deleteGoal(id)
+      },
+    },
+  })
 
   useEffect(() => {
     fetchGoals()
@@ -112,34 +139,7 @@ export function GoalList() {
         <AIChatSheet
           open={aiChatOpen}
           onOpenChange={setAIChatOpen}
-          handlers={{
-            onCreate: async (entity, data) => {
-              if (entity === "goal") {
-                await createGoal({
-                  name: String(data.name ?? ""),
-                  description: data.description != null ? String(data.description) : undefined,
-                  target_value: data.target_value != null ? String(data.target_value) : undefined,
-                  due_date: data.due_date != null ? String(data.due_date) : undefined,
-                  status: "active",
-                })
-              }
-            },
-            onUpdate: async (entity, id, data) => {
-              if (entity === "goal") {
-                await updateGoal(id, {
-                  name: data.name != null ? String(data.name) : undefined,
-                  description: data.description != null ? String(data.description) : undefined,
-                  target_value: data.target_value != null ? String(data.target_value) : undefined,
-                  due_date: data.due_date != null ? String(data.due_date) : undefined,
-                })
-              }
-            },
-            onDelete: async (entity, id) => {
-              if (entity === "goal") {
-                await deleteGoal(id)
-              }
-            },
-          }}
+          handlers={aiHandlers}
           context={{ page: "goals", goals: goals.map((g) => ({ id: g.id, name: g.name })) }}
         />
       )}

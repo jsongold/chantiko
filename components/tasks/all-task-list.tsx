@@ -11,6 +11,7 @@ import {
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
+import { useAIChatHandlers } from "@/hooks/useAIChatHandlers"
 import { EmptyState } from "@/components/shared/empty-state"
 import { features } from "@/lib/features"
 import { api } from "@/lib/api"
@@ -61,7 +62,11 @@ function groupTasksByDate(tasks: Task[]): DateGroup[] {
   return groups
 }
 
-export function AllTaskList() {
+interface AllTaskListProps {
+  viewSwitcher?: React.ReactNode
+}
+
+export function AllTaskList({ viewSwitcher }: AllTaskListProps = {}) {
   const { tasks, isLoading, fetchTasks, createTask, updateTask, deleteTask } =
     useAllTasks()
   const [goals, setGoals] = useState<GoalWithCounts[]>([])
@@ -70,6 +75,34 @@ export function AllTaskList() {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null)
+
+  const aiHandlers = useAIChatHandlers({
+    entityType: "task",
+    crud: {
+      create: async (data) => {
+        const goalId = goals[0]?.id
+        if (!goalId) return
+        await createTask({
+          goal_id: goalId,
+          name: String(data.name ?? ""),
+          description: data.description != null ? String(data.description) : undefined,
+          label: data.label != null ? String(data.label) : undefined,
+          due_date: data.due_date != null ? String(data.due_date) : undefined,
+          status: "active",
+        })
+      },
+      update: async (id, data) => {
+        await updateTask(id, {
+          name: data.name != null ? String(data.name) : undefined,
+          description: data.description != null ? String(data.description) : undefined,
+          label: data.label != null ? String(data.label) : undefined,
+        })
+      },
+      delete: async (id) => {
+        await deleteTask(id)
+      },
+    },
+  })
 
   useEffect(() => {
     fetchTasks()
@@ -105,6 +138,8 @@ export function AllTaskList() {
         description: data.description,
         label: data.label,
         due_date: data.due_date,
+        scheduled_start_at: data.scheduled_start_at ?? null,
+        scheduled_end_at: data.scheduled_end_at ?? null,
         status: "active",
       })
       setSelectedGoalId(null)
@@ -122,6 +157,8 @@ export function AllTaskList() {
         description: data.description,
         label: data.label,
         due_date: data.due_date,
+        scheduled_start_at: data.scheduled_start_at ?? null,
+        scheduled_end_at: data.scheduled_end_at ?? null,
       })
       setEditingTask(null)
     },
@@ -148,6 +185,7 @@ export function AllTaskList() {
     <>
       <div className="p-4 pb-20">
         <h2 className="text-lg font-semibold">Tasks</h2>
+        {viewSwitcher && <div className="mt-1 mb-3">{viewSwitcher}</div>}
         <p className="mb-4 text-sm text-muted-foreground">
           All tasks across your goals.
         </p>
@@ -226,36 +264,7 @@ export function AllTaskList() {
         <AIChatSheet
           open={aiChatOpen}
           onOpenChange={setAIChatOpen}
-          handlers={{
-            onCreate: async (entity, data) => {
-              if (entity === "task") {
-                const goalId = goals[0]?.id
-                if (!goalId) return
-                await createTask({
-                  goal_id: goalId,
-                  name: String(data.name ?? ""),
-                  description: data.description != null ? String(data.description) : undefined,
-                  label: data.label != null ? String(data.label) : undefined,
-                  due_date: data.due_date != null ? String(data.due_date) : undefined,
-                  status: "active",
-                })
-              }
-            },
-            onUpdate: async (entity, id, data) => {
-              if (entity === "task") {
-                await updateTask(id, {
-                  name: data.name != null ? String(data.name) : undefined,
-                  description: data.description != null ? String(data.description) : undefined,
-                  label: data.label != null ? String(data.label) : undefined,
-                })
-              }
-            },
-            onDelete: async (entity, id) => {
-              if (entity === "task") {
-                await deleteTask(id)
-              }
-            },
-          }}
+          handlers={aiHandlers}
           context={{
             page: "tasks",
             goals: goals.map((g) => ({ id: g.id, name: g.name })),

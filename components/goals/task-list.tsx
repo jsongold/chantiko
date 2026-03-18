@@ -15,6 +15,7 @@ import {
 import { ChevronRightIcon } from "lucide-react"
 import { ChikoFab } from "@/components/shared/chiko-fab"
 import { AIChatSheet } from "@/components/ai/ai-chat-sheet"
+import { useAIChatHandlers } from "@/hooks/useAIChatHandlers"
 import { EmptyState } from "@/components/shared/empty-state"
 import { features } from "@/lib/features"
 import { cn } from "@/lib/utils"
@@ -57,6 +58,31 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [aiChatOpen, setAIChatOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+
+  const aiHandlers = useAIChatHandlers({
+    entityType: "task",
+    crud: {
+      create: async (data) => {
+        await createTask({
+          name: String(data.name ?? ""),
+          description: data.description != null ? String(data.description) : undefined,
+          label: data.label != null ? String(data.label) : undefined,
+          due_date: data.due_date != null ? String(data.due_date) : undefined,
+          status: "active",
+        })
+      },
+      update: async (id, data) => {
+        await updateTask(id, {
+          name: data.name != null ? String(data.name) : undefined,
+          description: data.description != null ? String(data.description) : undefined,
+          label: data.label != null ? String(data.label) : undefined,
+        })
+      },
+      delete: async (id) => {
+        await deleteTask(id)
+      },
+    },
+  })
 
   useEffect(() => {
     fetchTasks()
@@ -205,33 +231,7 @@ export function TaskList({ goalId, goalName }: TaskListProps) {
         <AIChatSheet
           open={aiChatOpen}
           onOpenChange={setAIChatOpen}
-          handlers={{
-            onCreate: async (entity, data) => {
-              if (entity === "task") {
-                await createTask({
-                  name: String(data.name ?? ""),
-                  description: data.description != null ? String(data.description) : undefined,
-                  label: data.label != null ? String(data.label) : undefined,
-                  due_date: data.due_date != null ? String(data.due_date) : undefined,
-                  status: "active",
-                })
-              }
-            },
-            onUpdate: async (entity, id, data) => {
-              if (entity === "task") {
-                await updateTask(id, {
-                  name: data.name != null ? String(data.name) : undefined,
-                  description: data.description != null ? String(data.description) : undefined,
-                  label: data.label != null ? String(data.label) : undefined,
-                })
-              }
-            },
-            onDelete: async (entity, id) => {
-              if (entity === "task") {
-                await deleteTask(id)
-              }
-            },
-          }}
+          handlers={aiHandlers}
           context={{
             page: "tasks",
             goal_id: goalId,

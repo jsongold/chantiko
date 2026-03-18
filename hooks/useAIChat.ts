@@ -25,10 +25,24 @@ interface ChatResponse {
   summary: string
 }
 
+interface SessionsResponse {
+  messages: ChatMessage[]
+  has_more: boolean
+}
+
 export function useAIChat(handlers: OperationHandlers) {
   const aiMode = useSettingsStore((s) => s.aiMode)
-  const { setMessages, addMessage, updateMessageStatus, setLoading, setSending } =
-    useAIStore()
+  const {
+    setMessages,
+    addMessage,
+    prependMessages,
+    updateMessageStatus,
+    setLoading,
+    setSending,
+    setHasMore,
+    setLoadingMore,
+    setReplyTo,
+  } = useAIStore()
 
   const [pendingPreview, setPendingPreview] = useState<{
     assistantMessageId: string
@@ -64,19 +78,41 @@ export function useAIChat(handlers: OperationHandlers) {
   const fetchHistory = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await api.get<ChatMessage[]>("/ai/sessions")
+      const res = await api.get<SessionsResponse>("/ai/sessions?limit=10")
       if (res.success && res.data) {
-        setMessages(res.data)
+        setMessages(res.data.messages)
+        setHasMore(res.data.has_more)
       }
     } finally {
       setLoading(false)
     }
-  }, [setLoading, setMessages])
+  }, [setLoading, setMessages, setHasMore])
+
+  const fetchOlderMessages = useCallback(async () => {
+    const messages = useAIStore.getState().messages
+    if (messages.length === 0) return
+
+    setLoadingMore(true)
+    try {
+      const before = messages[0].created_at
+      const res = await api.get<SessionsResponse>(
+        `/ai/sessions?limit=10&before=${encodeURIComponent(before)}`
+      )
+      if (res.success && res.data) {
+        prependMessages(res.data.messages)
+        setHasMore(res.data.has_more)
+      }
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [prependMessages, setHasMore, setLoadingMore])
 
   const sendCommand = useCallback(
-    async (command: string, context: Record<string, unknown>) => {
+    async (command: string, context: Record<string, unknown>, replyToId?: string) => {
       const enrichedContext = { today: new Date().toISOString().slice(0, 10), ...context }
       const messages = useAIStore.getState().messages
+      const replyTo = useAIStore.getState().replyTo
+      const effectiveReplyToId = replyToId ?? replyTo?.id
       const history = messages.slice(-10).map((m) => ({
         role: m.role,
         content: m.content,
@@ -87,9 +123,13 @@ export function useAIChat(handlers: OperationHandlers) {
         role: "user",
         content: command,
         created_at: new Date().toISOString(),
+        reply_to_id: effectiveReplyToId,
+        reply_to_content: replyTo?.content,
+        reply_to_role: replyTo?.role,
       }
       addMessage(optimisticUserMsg)
       setSending(true)
+      setReplyTo(null)
 
       try {
         const res = await api.post<ChatResponse>("/ai/chat", {
@@ -97,6 +137,7 @@ export function useAIChat(handlers: OperationHandlers) {
           history,
           context: enrichedContext,
           model: APP_LLM_MODEL,
+          reply_to_id: effectiveReplyToId ?? null,
         })
 
         if (!res.success || !res.data) {
@@ -113,7 +154,6 @@ export function useAIChat(handlers: OperationHandlers) {
         const { user_message_id, assistant_message_id, operations, summary } =
           res.data
 
-        // Replace optimistic user message with real one
         const currentMessages = useAIStore.getState().messages
         const updatedMessages = currentMessages.map((m) =>
           m.id === optimisticUserMsg.id
@@ -144,7 +184,7 @@ export function useAIChat(handlers: OperationHandlers) {
         setSending(false)
       }
     },
-    [aiMode, addMessage, setSending, setMessages, applyOperations, updateMessageStatus]
+    [aiMode, addMessage, setSending, setMessages, setReplyTo, applyOperations, updateMessageStatus]
   )
 
   const applyPending = useCallback(async () => {
@@ -162,6 +202,7 @@ export function useAIChat(handlers: OperationHandlers) {
 
   return {
     fetchHistory,
+    fetchOlderMessages,
     sendCommand,
     applyPending,
     cancelPending,

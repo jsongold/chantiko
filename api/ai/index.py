@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 def _build_app():
-    from fastapi import FastAPI
+    from typing import Optional
+
+    from fastapi import FastAPI, Query
     from api._lib.auth import CurrentUserId
     from api._lib.db import get_session
     from api._lib.schemas import (
@@ -56,22 +58,45 @@ def _build_app():
     def get_ai_sessions(
         user_id: CurrentUserId,
         session: Session = Depends(get_session),
+        limit: int = Query(default=10, ge=1, le=50),
+        before: Optional[str] = Query(default=None),
     ):
         try:
-            rows = session.exec(
-                text(
-                    "SELECT id, role, content, operations, status, created_at "
-                    "FROM ai_sessions "
-                    "WHERE user_id = :uid "
-                    "ORDER BY created_at ASC "
-                    "LIMIT 50"
-                ).bindparams(uid=user_id)
-            ).mappings().all()
+            if before:
+                rows = session.exec(
+                    text(
+                        "SELECT s.id, s.role, s.content, s.operations, s.status, s.created_at, "
+                        "s.reply_to_id, r.content AS reply_to_content, r.role AS reply_to_role "
+                        "FROM ai_sessions s "
+                        "LEFT JOIN ai_sessions r ON s.reply_to_id = r.id "
+                        "WHERE s.user_id = :uid AND s.created_at < :before "
+                        "ORDER BY s.created_at DESC "
+                        "LIMIT :lim"
+                    ).bindparams(uid=user_id, before=before, lim=limit)
+                ).mappings().all()
+                rows = list(reversed(rows))
+            else:
+                rows = session.exec(
+                    text(
+                        "SELECT * FROM ("
+                        "  SELECT s.id, s.role, s.content, s.operations, s.status, s.created_at, "
+                        "  s.reply_to_id, r.content AS reply_to_content, r.role AS reply_to_role "
+                        "  FROM ai_sessions s "
+                        "  LEFT JOIN ai_sessions r ON s.reply_to_id = r.id "
+                        "  WHERE s.user_id = :uid "
+                        "  ORDER BY s.created_at DESC "
+                        "  LIMIT :lim"
+                        ") sub ORDER BY sub.created_at ASC"
+                    ).bindparams(uid=user_id, lim=limit)
+                ).mappings().all()
+
             messages = [dict(row) for row in rows]
             for m in messages:
                 if m.get("created_at"):
                     m["created_at"] = m["created_at"].isoformat()
-            return success_response(messages)
+
+            has_more = len(messages) == limit
+            return success_response({"messages": messages, "has_more": has_more})
         except Exception:
             logger.exception("Failed to fetch AI sessions")
             return error_response("Failed to load chat history.", status_code=500)
@@ -83,8 +108,22 @@ def _build_app():
         session: Session = Depends(get_session),
     ):
         try:
+            command_for_ai = body.command
+            if body.reply_to_id:
+                reply_row = session.exec(
+                    text(
+                        "SELECT content, role FROM ai_sessions "
+                        "WHERE id = :rid AND user_id = :uid"
+                    ).bindparams(rid=body.reply_to_id, uid=user_id)
+                ).mappings().first()
+                if reply_row:
+                    command_for_ai = (
+                        f'[Replying to {reply_row["role"]}: "{reply_row["content"]}"]\n\n'
+                        f"{body.command}"
+                    )
+
             result = generate_chat_response(
-                body.command, body.history, body.context, body.model
+                command_for_ai, body.history, body.context, body.model
             )
 
             now = datetime.now(timezone.utc)
@@ -93,12 +132,13 @@ def _build_app():
 
             session.exec(
                 text(
-                    "INSERT INTO ai_sessions (id, user_id, role, content, created_at) "
-                    "VALUES (:id, :uid, 'user', :content, :ts)"
+                    "INSERT INTO ai_sessions (id, user_id, role, content, reply_to_id, created_at) "
+                    "VALUES (:id, :uid, 'user', :content, :reply_to_id, :ts)"
                 ).bindparams(
                     id=user_msg_id,
                     uid=user_id,
                     content=body.command,
+                    reply_to_id=body.reply_to_id,
                     ts=now,
                 )
             )

@@ -2,8 +2,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import type { ChatMessage } from "@/store/aiStore"
 
+// Mock useKeyboardHeight
+vi.mock("@/hooks/useKeyboardHeight", () => ({
+  useKeyboardHeight: vi.fn(() => ({ isKeyboardOpen: false, keyboardHeight: 0 })),
+}))
+
 // Mock useAIChat
 const mockFetchHistory = vi.fn()
+const mockFetchOlderMessages = vi.fn()
 const mockSendCommand = vi.fn()
 const mockApplyPending = vi.fn()
 const mockCancelPending = vi.fn()
@@ -11,6 +17,7 @@ const mockCancelPending = vi.fn()
 vi.mock("@/hooks/useAIChat", () => ({
   useAIChat: vi.fn(() => ({
     fetchHistory: mockFetchHistory,
+    fetchOlderMessages: mockFetchOlderMessages,
     sendCommand: mockSendCommand,
     applyPending: mockApplyPending,
     cancelPending: mockCancelPending,
@@ -23,16 +30,49 @@ let mockStoreState = {
   messages: [] as ChatMessage[],
   isLoading: false,
   isSending: false,
+  hasMore: false,
+  isLoadingMore: false,
+  replyTo: null as ChatMessage | null,
 }
 
+const mockSetReplyTo = vi.fn()
+
 vi.mock("@/store/aiStore", () => ({
-  useAIStore: vi.fn(() => mockStoreState),
+  useAIStore: vi.fn((selector?: (s: typeof mockStoreState & { setReplyTo: typeof mockSetReplyTo }) => unknown) => {
+    const fullState = { ...mockStoreState, setReplyTo: mockSetReplyTo }
+    if (typeof selector === "function") return selector(fullState)
+    return fullState
+  }),
+}))
+
+// Mock MessageList to render messages directly
+vi.mock("@/components/ai/message-list", () => ({
+  MessageList: ({ messages, isLoading, isSending }: {
+    messages: ChatMessage[]
+    isLoading: boolean
+    isSending: boolean
+  }) => {
+    if (isLoading) return <div>Loading...</div>
+    if (messages.length === 0) return <p>Tell me what you&apos;d like to log or change.</p>
+    return (
+      <div data-testid="message-list">
+        {messages.map((m) => (
+          <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={m.role === "user" ? "bg-primary" : "bg-muted"}>
+              {m.content}
+            </div>
+          </div>
+        ))}
+        {isSending && <div data-testid="sending-spinner">Sending...</div>}
+      </div>
+    )
+  },
 }))
 
 // Mock AIEditBar to simplify testing the submit behavior
 vi.mock("@/components/ai/ai-edit-bar", () => ({
   AIEditBar: ({ onSubmit, isLoading, placeholder }: {
-    onSubmit: (cmd: string) => void
+    onSubmit: (cmd: string, replyToId?: string) => void
     isLoading: boolean
     placeholder?: string
   }) => (
@@ -100,6 +140,9 @@ describe("AIChatSheet", () => {
       messages: [],
       isLoading: false,
       isSending: false,
+      hasMore: false,
+      isLoadingMore: false,
+      replyTo: null,
     }
   })
 
@@ -147,12 +190,12 @@ describe("AIChatSheet", () => {
     expect(screen.getByText("Log my run")).toBeInTheDocument()
     expect(screen.getByText("Logged 5k run")).toBeInTheDocument()
 
-    // User message bubble container should have justify-end
+    // User message container should have justify-end
     const userBubble = screen.getByText("Log my run").closest("div[class]")
     const userContainer = userBubble?.parentElement
     expect(userContainer?.className).toContain("justify-end")
 
-    // Assistant message bubble container should have justify-start
+    // Assistant message container should have justify-start
     const assistantBubble = screen.getByText("Logged 5k run").closest("div[class]")
     const assistantContainer = assistantBubble?.parentElement
     expect(assistantContainer?.className).toContain("justify-start")
@@ -197,6 +240,6 @@ describe("AIChatSheet", () => {
 
     await user.click(screen.getByTestId("ai-send-btn"))
 
-    expect(mockSendCommand).toHaveBeenCalledWith("test command", {})
+    expect(mockSendCommand).toHaveBeenCalledWith("test command", {}, undefined)
   })
 })
