@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { RecurrencePicker } from "@/components/tasks/recurrence-picker"
 import {
   Select,
   SelectTrigger,
@@ -40,6 +41,7 @@ const taskFormSchema = z
     goal_id: z.string().nullable(),
     scheduled_start_at: z.string().nullable().optional(),
     scheduled_end_at: z.string().nullable().optional(),
+    rrule: z.string().nullable().optional(),
   })
   .refine(
     (data) => {
@@ -85,6 +87,7 @@ export function AddTaskSheet({
       goal_id: defaultGoalId,
       scheduled_start_at: null,
       scheduled_end_at: null,
+      rrule: null,
     },
   })
 
@@ -104,6 +107,7 @@ export function AddTaskSheet({
         scheduled_end_at: task.scheduled_end_at
           ? task.scheduled_end_at.slice(0, 16)
           : null,
+        rrule: task.rrule ?? null,
       })
     } else {
       setScheduleEnabled(false)
@@ -115,6 +119,7 @@ export function AddTaskSheet({
         goal_id: defaultGoalId ?? goals[0]?.id ?? null,
         scheduled_start_at: null,
         scheduled_end_at: null,
+        rrule: null,
       })
     }
   }, [task, form, defaultGoalId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -124,6 +129,7 @@ export function AddTaskSheet({
       ...values,
       scheduled_start_at: scheduleEnabled ? values.scheduled_start_at ?? null : null,
       scheduled_end_at: scheduleEnabled ? values.scheduled_end_at ?? null : null,
+      rrule: scheduleEnabled ? values.rrule ?? null : null,
     }
     onSubmit(submitData)
     form.reset()
@@ -226,6 +232,10 @@ export function AddTaskSheet({
                     </p>
                   )}
                 </div>
+                <RecurrencePicker
+                  value={form.watch("rrule") ?? null}
+                  onChange={(r) => form.setValue("rrule", r)}
+                />
               </div>
             )}
           </div>

@@ -1,17 +1,23 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar"
 import type { View } from "react-big-calendar"
 import {
   format,
   parse,
   startOfWeek,
+  startOfDay,
+  endOfDay,
+  startOfMonth,
+  endOfMonth,
+  addDays,
   getDay,
 } from "date-fns"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import type { Task } from "@/types"
 import type { ViewMode } from "./view-switcher"
+import { expandTaskOccurrences } from "@/lib/rrule-utils"
 
 const locales = { "en-US": {} }
 
@@ -43,20 +49,39 @@ const modeToView: Record<Exclude<ViewMode, "list" | "year">, View> = {
   month: Views.MONTH,
 }
 
+function getViewRange(date: Date, mode: Exclude<ViewMode, "list" | "year">): [Date, Date] {
+  if (mode === "day") return [startOfDay(date), endOfDay(date)]
+  if (mode === "week") {
+    const start = startOfWeek(date, { weekStartsOn: 0 })
+    return [start, addDays(start, 6)]
+  }
+  return [startOfMonth(date), endOfMonth(date)]
+}
+
 export function TaskCalendar({ mode, tasks, onEventClick }: TaskCalendarProps) {
+  const [currentDate, setCurrentDate] = useState(() => new Date())
+
+  const [rangeStart, rangeEnd] = useMemo(
+    () => getViewRange(currentDate, mode),
+    [currentDate, mode]
+  )
+
   const events = useMemo<CalendarEvent[]>(() => {
-    return tasks
-      .filter((t) => t.scheduled_start_at !== null)
-      .map((t) => ({
-        id: t.id,
-        title: t.name,
-        start: new Date(t.scheduled_start_at!),
-        end: t.scheduled_end_at
-          ? new Date(t.scheduled_end_at)
-          : new Date(new Date(t.scheduled_start_at!).getTime() + 30 * 60 * 1000),
-        resource: t,
-      }))
-  }, [tasks])
+    const result: CalendarEvent[] = []
+    for (const task of tasks) {
+      const occurrences = expandTaskOccurrences(task, rangeStart, rangeEnd)
+      occurrences.forEach(({ start, end }, i) => {
+        result.push({
+          id: `${task.id}-${i}`,
+          title: task.name,
+          start,
+          end,
+          resource: task,
+        })
+      })
+    }
+    return result
+  }, [tasks, rangeStart, rangeEnd])
 
   const today = useMemo(() => new Date(), [])
   const scrollTime = useMemo(() => {
@@ -72,6 +97,8 @@ export function TaskCalendar({ mode, tasks, onEventClick }: TaskCalendarProps) {
         events={events}
         view={modeToView[mode]}
         onView={() => {}}
+        date={currentDate}
+        onNavigate={setCurrentDate}
         defaultDate={today}
         onSelectEvent={(event) => {
           onEventClick?.(event.resource)

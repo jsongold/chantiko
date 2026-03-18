@@ -63,6 +63,7 @@ export interface Task {
   due_date: string | null
   scheduled_start_at: string | null
   scheduled_end_at: string | null
+  rrule: string | null
   status: "active" | "done" | "archived"
   is_deleted: boolean
   created_at: string

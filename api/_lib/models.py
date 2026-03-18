@@ -77,6 +77,7 @@ class Task(SQLModel, table=True):
     due_date: Optional[datetime] = Field(default=None)
     scheduled_start_at: Optional[datetime] = Field(default=None)
     scheduled_end_at: Optional[datetime] = Field(default=None)
+    rrule: Optional[str] = Field(default=None)
     status: str = Field(default="active")
     is_deleted: bool = Field(default=False)
     created_at: datetime = Field(default_factory=_utcnow)

@@ -102,6 +102,7 @@ def _build_app():
                 due_date=datetime.fromisoformat(body.due_date) if body.due_date else None,
                 scheduled_start_at=datetime.fromisoformat(body.scheduled_start_at) if body.scheduled_start_at else None,
                 scheduled_end_at=datetime.fromisoformat(body.scheduled_end_at) if body.scheduled_end_at else None,
+                rrule=body.rrule,
                 status=body.status,
             )
             session.add(task)

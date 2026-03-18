@@ -140,6 +140,7 @@ export function AllTaskList({ viewSwitcher }: AllTaskListProps = {}) {
         due_date: data.due_date,
         scheduled_start_at: data.scheduled_start_at ?? null,
         scheduled_end_at: data.scheduled_end_at ?? null,
+        rrule: data.rrule ?? null,
         status: "active",
       })
       setSelectedGoalId(null)
@@ -159,6 +160,7 @@ export function AllTaskList({ viewSwitcher }: AllTaskListProps = {}) {
         due_date: data.due_date,
         scheduled_start_at: data.scheduled_start_at ?? null,
         scheduled_end_at: data.scheduled_end_at ?? null,
+        rrule: data.rrule ?? null,
       })
       setEditingTask(null)
     },
