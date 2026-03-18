@@ -86,16 +86,17 @@ export function ChikoFab({ onManualOpen, onAIOpen, manualLabel = "Add activity" 
 
       {/* Radial mode options — arc at 135°, 90°, 45° */}
       {radialOpen &&
-        MODES.map(({ mode, icon: Icon, label, x, y }) => (
+        MODES.map(({ mode, icon: Icon, label, x, y }, i) => (
           <Button
             key={mode}
             variant={mode === aiMode ? "default" : "outline"}
-            size="icon"
-            className="fixed z-40 size-10 rounded-full shadow-md animate-in fade-in zoom-in-50 duration-150"
+            size="icon-lg"
+            className="fixed z-40 size-12 rounded-full shadow-md"
             style={{
               bottom: `calc(5rem + 1.5rem - ${y}px)`,
               left: `calc(50% + ${x}px)`,
               transform: "translate(-50%, 50%)",
+              animation: `radial-pop 200ms ${i * 50}ms both cubic-bezier(0.34, 1.56, 0.64, 1)`,
             }}
             aria-label={label}
             onTouchEnd={(e) => {
@@ -107,7 +108,7 @@ export function ChikoFab({ onManualOpen, onAIOpen, manualLabel = "Add activity" 
               handleSelectMode(mode)
             }}
           >
-            <Icon className="size-4" />
+            <Icon className="size-5" />
           </Button>
         ))}
 
