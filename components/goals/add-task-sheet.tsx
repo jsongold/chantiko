@@ -233,6 +233,7 @@ export function AddTaskSheet({
                   )}
                 </div>
                 <RecurrencePicker
+                  key={task?.id ?? "new"}
                   value={form.watch("rrule") ?? null}
                   onChange={(r) => form.setValue("rrule", r)}
                 />

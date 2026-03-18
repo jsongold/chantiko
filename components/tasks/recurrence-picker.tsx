@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import {
@@ -37,14 +37,6 @@ export function RecurrencePicker({ value, onChange }: RecurrencePickerProps) {
   const [preset, setPreset] = useState<RecurrencePreset>(parsed.preset)
   const [selectedDays, setSelectedDays] = useState<number[]>(parsed.selectedDays)
   const [customText, setCustomText] = useState(parsed.customText)
-
-  // Sync external value changes (e.g. form reset)
-  useEffect(() => {
-    const p = parseRRule(value)
-    setPreset(p.preset)
-    setSelectedDays(p.selectedDays)
-    setCustomText(p.customText)
-  }, [value])
 
   const emit = (
     nextPreset: RecurrencePreset,
